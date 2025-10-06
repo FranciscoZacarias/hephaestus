@@ -1,0 +1,37 @@
+INFO :: 2025-October-06 13:54:08.509 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 13:54:08.510 :: C:\Personal\hephaestus\src\hephaestus.c:38: [Hephaestus]: Please provide hph file with -"/relative/path/to/file" or --input "/relative/path/to/file"
+INFO :: 2025-October-06 13:56:16.471 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:57:00.345 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 13:57:03.798 :: C:\Personal\hephaestus\src\hephaestus.c:38: [Hephaestus]: Please provide hph file with -"/relative/path/to/file" or --input "/relative/path/to/file"
+INFO :: 2025-October-06 13:57:15.795 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:57:49.013 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:57:49.246 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:57:56.210 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:58:04.687 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:58:11.666 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:58:31.631 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:58:32.589 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:58:37.338 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:58:52.059 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 13:59:58.904 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:02:29.695 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:02:45.423 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:21:13.926 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 14:21:13.970 :: C:\Personal\hephaestus\src\hephaestus.c:71: [Hephaestus]: Failed to load file: C:/Personal/hephaestus/src/hapheastus.c
+INFO :: 2025-October-06 14:21:24.505 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 14:21:27.931 :: C:\Personal\hephaestus\src\hephaestus.c:71: [Hephaestus]: Failed to load file: C:/Personal/hephaestus/src/hapheastus.c
+INFO :: 2025-October-06 14:21:31.194 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 14:21:32.509 :: C:\Personal\hephaestus\src\hephaestus.c:71: [Hephaestus]: Failed to load file: C:/Personal/hephaestus/src/hapheastus.c
+INFO :: 2025-October-06 14:21:36.344 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:22:28.264 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 14:22:29.393 :: C:\Personal\hephaestus\src\hephaestus.c:71: [Hephaestus]: Failed to load file: C:/Personal/hephaestus/src/hapheastus.c
+INFO :: 2025-October-06 14:23:22.041 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:24:57.713 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 14:24:57.761 :: C:\Personal\hephaestus\src\hephaestus.c:71: [Hephaestus]: Failed to load file: C:/Personal/hephaestus/src/hapheastus.c
+INFO :: 2025-October-06 14:25:13.892 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 14:25:13.936 :: C:\Personal\hephaestus\src\hephaestus.c:71: [Hephaestus]: Failed to load file: C:/Personal/hephaestus/src/hepheastus.c
+INFO :: 2025-October-06 14:25:22.966 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:27:18.940 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:27:32.889 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:27:44.629 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 14:28:15.934 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
