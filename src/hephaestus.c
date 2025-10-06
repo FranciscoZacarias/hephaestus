@@ -82,7 +82,8 @@ load_all_tokens(String8 file_path)
   for (;;)
   {
     Token token = next_token(&lexer);
-    token_array_add(result, token);
+		result->tokens[result->count] = token;
+		result->count += 1;
 
     if (token.type == Token_EOF)
       break;
@@ -215,11 +216,4 @@ next_token(Lexer* lexer)
 
   token.value = string8_new(1, lexer->current_character - 1);
   return token;
-}
-
-function void
-token_array_add(Token_Array* array, Token token)
-{
-  array->tokens[array->count] = token;
-  array->count += 1;
 }

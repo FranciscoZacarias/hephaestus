@@ -1,0 +1,1 @@
+build\hephaestus.exe --input ../test.hph

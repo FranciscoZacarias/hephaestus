@@ -141,7 +141,6 @@ typedef struct Lexer
   Token current_token;
 } Lexer;
 
-function void         token_array_add(Token_Array* array, Token token);
 function Token_Array* load_all_tokens(String8 file_path);
 function Token        next_token(Lexer* lexer);
 

@@ -35,3 +35,6 @@ INFO :: 2025-October-06 14:27:18.940 :: C:\Personal\hephaestus\src\fz_std\base\e
 INFO :: 2025-October-06 14:27:32.889 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
 INFO :: 2025-October-06 14:27:44.629 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
 INFO :: 2025-October-06 14:28:15.934 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+INFO :: 2025-October-06 17:41:05.676 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<
+FATAL :: 2025-October-06 17:41:05.722 :: C:\Personal\hephaestus\src\hephaestus.c:40: [Hephaestus]: Please provide hph file with -"/relative/path/to/file" or --input "/relative/path/to/file"
+INFO :: 2025-October-06 17:48:58.401 :: C:\Personal\hephaestus\src\fz_std\base\entry_point.c:13: >>>> Entry point <<<<

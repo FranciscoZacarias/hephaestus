@@ -1,0 +1,29 @@
+
+// Config
+@config
+{
+  @output_file_name ``
+  @output_file_location ``
+}
+
+@table // Defines stacks for different types
+Stack_Table (name_upper name type default_value max)
+{
+  { Node              node              UI_Node*             (UI_Node){0}                   32 }
+  { Top_Left          top_left          Vec2f32              `vec2f32(0.0f, 0.0f)`          32 }
+  { Size_X            size_x            f32                   g_os_window.dimensions.x      32 }
+  { Size_Y            size_y            f32                   g_os_window.dimensions.y      32 }
+  { Spacing_Y         spacing_y         f32                   0.0f                          32 }
+  { Alignment_Kind    alignment_kind    UI_Alignment_Kind    UI_Alignment_Kind_Y            32 }
+  { Width_Kind        width_kind        UI_Width_Kind        UI_Width_Kind_Fill             32 }
+  { Height_Kind       height_kind       UI_Height_Kind       UI_Height_Kind_Fill            32 }
+  { Node_Color_Scheme node_color_scheme UI_Node_Color_Scheme ui_context.color_scheme.window 32 }
+  { Border_Color      border_color      Color                PURPLE(1)                      32 }
+  { Background_Color  background_color  Color                PURPLE(1)                      32 }
+}
+
+@generate
+{
+  `// @Hephaestus generated code $(@time_now) \n\n`;
+  @foreach(Stack_Table) `typedef struct $(name_upper) $(name_upper);\n struct $(name_upper)_stack\n{\n  $(type) data[max];\n  u32 top_index;\n  $(type) bottom_val;\n};\n`;
+}
