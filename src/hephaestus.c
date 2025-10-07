@@ -82,8 +82,8 @@ load_all_tokens(String8 file_path)
   for (;;)
   {
     Token token = next_token(&lexer);
-		result->tokens[result->count] = token;
-		result->count += 1;
+    result->tokens[result->count] = token;
+    result->count += 1;
 
     if (token.type == Token_EOF)
       break;
@@ -216,4 +216,68 @@ next_token(Lexer* lexer)
 
   token.value = string8_new(1, lexer->current_character - 1);
   return token;
+}
+
+function void
+parse_tokens(Token_Array* array)
+{
+  if (array->count <= 0)
+  {
+    hph_fatal(S("No tokens in Token_Array"));
+    return;
+  }
+
+  Scratch scratch = scratch_begin(0,0);
+
+#define next_token() &array->tokens[array->count++]
+  Token* token = next_token();
+  while (token->type != Token_EOF)
+  {
+    if (token->type == Token_At)
+    {
+      // Parse Config
+      if (string8_match(token->value, S("config"), false))
+      {
+        while(token->type != Token_BraceOpen) 
+        {
+          token = next_token();
+        }
+        token = next_token();
+
+        if (token->type == Token_At)
+        {
+          token = next_token();
+          if (string8_match(token->value, S("output_file_name"), false))
+          {
+          
+          }
+          if (string8_match(token->value, S("output_file_name"), false))
+          {
+          
+          }
+        }
+        else
+        {
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Unexpected Token inside @config. Expected Token_At, got "S_FMT"", token->line, token->column, token_kind_string[token->type]));
+        }
+      }
+
+      // Parse tables
+      else if (string8_match(token->value, S("table"), false))
+      {
+        token = next_token();      
+      }
+
+      // Parse generates
+      else if (string8_match(token->value, S("generate"), false))
+      {
+        token = next_token();
+      }
+    }
+    else
+    {
+      hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '@<command>' at the global scope. Instead  got "S_FMT"", token->line, token->column, token_kind_string[token->type]));
+    }
+  }
+  scratch_end(&scratch);
 }

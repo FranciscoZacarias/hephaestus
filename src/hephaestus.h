@@ -109,7 +109,8 @@ typedef enum
   Token_Count,
 } Token_Kind;
 
-typedef struct Token
+typedef struct Token Token;
+struct Token
 {
   Token_Kind type;
   String8 value;
@@ -117,16 +118,18 @@ typedef struct Token
   u32 end_offset;
   u32 line;
   u32 column;
-} Token;
+};
 
-typedef struct Token_Array
+typedef struct Token_Array Token_Array;
+struct Token_Array
 {
   Token* tokens;
   u64 count;
-} Token_Array;
+};
 #define TOKEN_ARRAY_SIZE 4096
 
-typedef struct Lexer
+typedef struct Lexer Lexer;
+struct Lexer
 {
   Arena* arena;
 
@@ -139,12 +142,12 @@ typedef struct Lexer
   u32 column;
 
   Token current_token;
-} Lexer;
+};
 
 function Token_Array* load_all_tokens(String8 file_path);
 function Token        next_token(Lexer* lexer);
 
-
+function void         parse_tokens(Token_Array* array);
 
 #define hph_fatal(str8) emit_fatal(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
 

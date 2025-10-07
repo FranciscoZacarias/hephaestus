@@ -731,5 +731,5 @@ function void
 string8_print_line(String8 str)
 {
   string8_print(str);
-  os_console_write("\n");
+  os_console_write(S("\n"));
 }
