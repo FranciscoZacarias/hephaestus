@@ -421,6 +421,22 @@ process_tokens(Token_Array* array)
               while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
               {
                 advance_iterator(&token_iterator, true);
+
+                if (token_iterator->current_token->kind == Token_Backtick)
+                {
+                
+                }
+                else
+                {
+                  String8 value = token_iterator->current_token.value;
+                  advance_iterator(&token_iterator, false);
+                  while (!is_token_whitespace(token_iterator->current_token))
+                  {
+                    value = string8_concat(scratch.arena, value, token_iterator.current_token);
+                    advance_iterator(&token_iterator, false);
+                  }
+                }
+
               }
               if (token_iterator.current_token->kind == Token_BraceClose)
               {
@@ -550,19 +566,13 @@ advance_iterator(Token_Iterator* iterator, b32 skip_whitespace)
 
     if (skip_whitespace)
     {
-      if (iterator->current_token->kind == Token_Space          ||
-          iterator->current_token->kind == Token_Tab            ||
-          iterator->current_token->kind == Token_Newline        ||
-          iterator->current_token->kind == Token_CarriageReturn ||
-          iterator->current_token->kind == Token_Null           ||
-          iterator->current_token->kind == Token_Bell           ||
-          iterator->current_token->kind == Token_Backspace      ||
-          iterator->current_token->kind == Token_VerticalTab    ||
-          iterator->current_token->kind == Token_FormFeed       ||
-          iterator->current_token->kind == Token_Escape         ||
-          iterator->current_token->kind == Token_Delete)
+      if (is_token_whitespace(iterator->current_token))
       {
-        if (iterator->cursor + 1 >= iterator->array->count) { result = false; break; }
+        if (iterator->cursor + 1 >= iterator->array->count)
+        {
+          result = false;
+          break;
+        }
         iterator->cursor += 1;
         iterator->current_token = &iterator->array->tokens[iterator->cursor];
         continue;
@@ -639,4 +649,24 @@ parse_template_string(Token_Iterator* iterator)
   }
 
   return result;
+}
+
+function b32
+is_token_whitespace(Token* token)
+{
+  b32 result = false;
+  if (token->kind == Token_Space          ||
+      token->kind == Token_Tab            ||
+      token->kind == Token_Newline        ||
+      token->kind == Token_CarriageReturn ||
+      token->kind == Token_Null           ||
+      token->kind == Token_Bell           ||
+      token->kind == Token_Backspace      ||
+      token->kind == Token_VerticalTab    ||
+      token->kind == Token_FormFeed       ||
+      token->kind == Token_Escape         ||
+      token->kind == Token_Delete)
+  {
+    result = true;
+  }
 }
