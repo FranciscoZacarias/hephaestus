@@ -174,15 +174,17 @@ struct Table
   Table_Row* rows;
   u32 rows_count;
 
-  String8  table_name;
-  String8* headers;
-  u32 headers_count;
+  String8  name;
+  String8* columns;
+  u32 columns_count;
 };
 
 #define HPH_MAX_TABLES 16
 typedef struct Hephaestus Hephaestus;
 struct Hephaestus
 {
+	Arena* arena;
+
   String8 output_file_name;
   String8 output_file_path;
 
@@ -190,6 +192,7 @@ struct Hephaestus
 };
 
 global Lexer lexer;
+global Hephaestus hephaestus;
 
 function Token_Array* load_all_tokens(String8 file_path);
 function Token        next_token();
@@ -197,7 +200,7 @@ function Token        next_token();
 function void         process_tokens(Token_Array* array);
 function b32          advance_iterator(Token_Iterator* iterator, b32 skip_whitespace);
 function b32          advance_iterator_to(Token_Iterator* iterator, Token_Kind kind);
-function void         parse_template_string(Token_Iterator* iterator);
+function String8      parse_template_string(Token_Iterator* iterator);
 
 #define hph_fatal(str8) emit_fatal(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
 #define hph_warn(str8)  emit_warn(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));

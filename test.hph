@@ -1,13 +1,8 @@
 
-// Config 
-
-// Another comment // Another 
-//comment
-
 @config
 {
-  @output_file_name ``
-  @output_file_path ``
+  @output_file_name `test_file`
+  @output_file_path `../src/generated/`
 }
 
 @table // Defines stacks for different types

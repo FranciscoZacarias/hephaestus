@@ -39,6 +39,10 @@ entry_point(Command_Line* command_line)
   {
     hph_fatal(S("Please provide hph file with -\"/relative/path/to/file\" or --input \"/relative/path/to/file\""));
   }
+  
+  // Init hph
+  hephaestus = (Hephaestus){0};
+  hephaestus.arena = arena_alloc();
 
   // Load tokens
   Token_Array* token_array = load_all_tokens(hph_file_path);
@@ -256,6 +260,7 @@ process_tokens(Token_Array* array)
       advance_iterator(&token_iterator, true);
 
       // Parse Config
+      // --------------------
       if (string8_match(token_iterator.current_token->value, S("config"), false))
       {
         advance_iterator(&token_iterator, true);
@@ -277,11 +282,21 @@ process_tokens(Token_Array* array)
             {
               // output_file_name
               advance_iterator(&token_iterator, true);
+              hephaestus.output_file_name = parse_template_string(&token_iterator);
+              if (hephaestus.output_file_name.size == 0)
+              {
+                hph_fatal(S("Must provide a valid @output_file_name inside @config."));
+              }
             }
             else if (string8_match(token_iterator.current_token->value, S("output_file_path"), false))
             {
               // handle output_file_location
               advance_iterator(&token_iterator, true);
+              hephaestus.output_file_path = parse_template_string(&token_iterator);
+              if (hephaestus.output_file_path.size == 0)
+              {
+                hph_fatal(S("Must provide a valid @output_file_path inside @config."));
+              }
             }
             else
             {
@@ -301,26 +316,61 @@ process_tokens(Token_Array* array)
       }
 
       // Parse Table
+      // --------------------
       else if (string8_match(token_iterator.current_token->value, S("table"), false))
       {
+        Table* table = push_array(hephaestus.arena, Table, 1);
+
+        if (hephaestus.table == NULL)
+        {
+          hephaestus.table = table;
+        }
+        else
+        {
+          Table* table_node = hephaestus.table;
+          while (table_node->next != NULL) table_node = table_node->next;
+          table_node = table;
+        }
+
         advance_iterator(&token_iterator, true);
 
         // table name
         if (token_iterator.current_token->kind == Token_String_Identifier)
         {
+          table->name = string8_copy(hephaestus.arena, token_iterator.current_token->value);
           advance_iterator(&token_iterator, true);
         }
 
         // expect '(' ... ')' for header
         if (token_iterator.current_token->kind == Token_ParenOpen)
         {
+          String8_List columns = string8_list_empty();
+          advance_iterator(&token_iterator, true);
+
           while (token_iterator.current_token->kind != Token_ParenClose && token_iterator.current_token->kind != Token_EOF)
           {
+
+            string8_list_push(scratch.arena, &columns, token_iterator.current_token->value);
             advance_iterator(&token_iterator, true);
           }
+
           if (token_iterator.current_token->kind == Token_ParenClose)
           {
+            table->columns_count = columns.node_count;
+            table->columns = push_array(hephaestus.arena, String8, columns.node_count);
+
+            u32 index = 0;
+            for (String8_Node* node = columns.first; node; node = node->next)
+            {
+              table->columns[index] = node->value;
+              index += 1;
+            }
+
             advance_iterator(&token_iterator, true);
+          }
+          else
+          {
+            hph_fatal(S("Expected Token_ParenClose after parsing table columns."));
           }
         }
 
@@ -355,6 +405,7 @@ process_tokens(Token_Array* array)
       }
 
       // Parse Generate
+      // --------------------
       else if (string8_match(token_iterator.current_token->value, S("generate"), false))
       {
         advance_iterator(&token_iterator, true);
@@ -510,9 +561,11 @@ advance_iterator_to(Token_Iterator* iterator, Token_Kind kind)
   return result;
 }
 
-function void
+function String8
 parse_template_string(Token_Iterator* iterator)
 {
+  String8 result = {0};
+
   if (iterator->current_token->kind != Token_Backtick)
   {
     hph_fatal(S("function void parse_template_string(Token_Iterator* iterator) requires current token to be a backtick"));
@@ -528,6 +581,8 @@ parse_template_string(Token_Iterator* iterator)
     // Result
     advance_iterator(iterator, false);
 
+    String8_List result_list = string8_list_new(hephaestus.arena, iterator->current_token->value);
+
     for (;;)
     {
       if (iterator->current_token->kind == Token_EOF)
@@ -539,7 +594,14 @@ parse_template_string(Token_Iterator* iterator)
       {
         break;
       }
+      string8_list_push(hephaestus.arena, &result_list, iterator->current_token->value);
+      advance_iterator(iterator, false);
     }
+
+    result = string8_list_join(hephaestus.arena, &result_list);
+    advance_iterator(iterator, false); // Skip last backtick
     scratch_end(&scratch);
   }
+
+  return result;
 }

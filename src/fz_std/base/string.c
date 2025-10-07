@@ -495,6 +495,17 @@ string8_list_new(Arena* arena, String8 str)
   return result;
 }
 
+function String8_List
+string8_list_empty()
+{
+  String8_List result = {0};
+  result.first = NULL;
+  result.last  = NULL;
+  result.node_count = 0;
+  result.total_size = 0;
+  return result;
+}
+
 function String8
 string8_list_pop(String8_List* list)
 {

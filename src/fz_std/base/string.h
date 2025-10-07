@@ -59,6 +59,7 @@ function String8 string8_reverse(Arena* arena, String8 str);
 
 function String8_List string8_split(Arena* arena, String8 str, String8 split_character); /* Split string by delimiter into list. */
 function String8_List string8_list_new(Arena* arena, String8 str); /* Create new list with single string element. */
+function String8_List string8_list_empty(); /* Create new empty string list. */
 function String8      string8_list_pop(String8_List* list); /* Remove and return first element from list. */
 function void         string8_list_clear(String8_List* list); /* Clear all elements from list. */
 function void         string8_list_push(Arena* arena, String8_List* list, String8 str); /* Add string to end of list. */
