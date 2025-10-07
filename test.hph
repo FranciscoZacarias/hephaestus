@@ -23,6 +23,6 @@ Stack_Table (name_upper name type default_value max)
 
 @generate
 {
-  `// @Hephaestus generated code $(@time_now) \n\n`;
-  @foreach(Stack_Table) `typedef struct $(name_upper) $(name_upper);\n struct $(name_upper)_stack\n{\n  $(type) data[max];\n  u32 top_index;\n  $(type) bottom_val;\n};\n`;
+  `// @Hephaestus generated code $(@time_now) \n\n`
+  @foreach(Stack_Table) `typedef struct $(name_upper) $(name_upper);\n struct $(name_upper)_stack\n{\n  $(type) data[max];\n  u32 top_index;\n  $(type.slice(-1)) bottom_val;\n};\n`
 }

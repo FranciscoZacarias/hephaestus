@@ -41,8 +41,12 @@ entry_point(Command_Line* command_line)
   }
   
   // Init hph
-  hephaestus = (Hephaestus){0};
-  hephaestus.arena = arena_alloc();
+  hephaestus                 = (Hephaestus){0};
+  hephaestus.arena           = arena_alloc();
+  hephaestus.table           = push_array(hephaestus.arena, Table, HPH_MAX_TABLES);
+  hephaestus.table_count     = 0;
+  hephaestus.generator       = push_array(hephaestus.arena, Generator, HPH_MAX_GENERATORS);
+  hephaestus.generator_count = 0;
 
   // Load tokens
   Token_Array* token_array = load_all_tokens(hph_file_path);
@@ -140,21 +144,87 @@ next_token()
   // Control characters
   switch (c)
   {
-    case ' ':  token.kind = Token_Space;          return token;
-    case '\t': token.kind = Token_Tab;            return token;
-    case '\n': token.kind = Token_Newline;        return token;
-    case '\r': token.kind = Token_CarriageReturn; return token;
-    case '\0': token.kind = Token_Null;           return token;
-    case '\a': token.kind = Token_Bell;           return token;
-    case '\b': token.kind = Token_Backspace;      return token;
-    case '\v': token.kind = Token_VerticalTab;    return token;
-    case '\f': token.kind = Token_FormFeed;       return token;
-    case 0x1B: token.kind = Token_Escape;         return token;
-    case 0x7F: token.kind = Token_Delete;         return token;
+    case ' ':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Space;
+      return token;
+    }
+    case '\t':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Tab;
+      return token;
+    }
+    case '\n':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Newline;
+      return token;
+    }
+    case '\r':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_CarriageReturn;
+      return token;
+    }
+    case '\0':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Null;
+      return token;
+    }
+    case '\a':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Bell;
+      return token;
+    }
+    case '\b':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Backspace;
+      return token;
+    }
+    case '\v':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_VerticalTab;
+      return token;
+    }
+    case '\f':
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_FormFeed;
+      return token;
+    }
+    case 0x1B:
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Escape;
+      return token;
+    }
+    case 0x7F:
+    {
+      u8* start = lexer.current_character - 1;
+      token.value = (String8){(u64)(lexer.current_character - start), start};
+      token.kind = Token_Delete;
+      return token;
+    }
   }
 
   // Numbers
-  if (u8_is_digit(c))
+  if (u8_is_digit(c) || (c == '-' && u8_is_digit(*lexer.current_character)))
   {
     u8* start = lexer.current_character - 1;
     while (lexer.current_character < lexer.file_end &&
@@ -282,7 +352,8 @@ process_tokens(Token_Array* array)
             {
               // output_file_name
               advance_iterator(&token_iterator, true);
-              hephaestus.output_file_name = parse_template_string(&token_iterator);
+              Template_String8 template_string = parse_template_string(&token_iterator);
+              hephaestus.output_file_name = template_string.string;
               if (hephaestus.output_file_name.size == 0)
               {
                 hph_fatal(S("Must provide a valid @output_file_name inside @config."));
@@ -292,7 +363,8 @@ process_tokens(Token_Array* array)
             {
               // handle output_file_location
               advance_iterator(&token_iterator, true);
-              hephaestus.output_file_path = parse_template_string(&token_iterator);
+              Template_String8 template_string = parse_template_string(&token_iterator);
+              hephaestus.output_file_path = template_string.string;
               if (hephaestus.output_file_path.size == 0)
               {
                 hph_fatal(S("Must provide a valid @output_file_path inside @config."));
@@ -319,19 +391,7 @@ process_tokens(Token_Array* array)
       // --------------------
       else if (string8_match(token_iterator.current_token->value, S("table"), false))
       {
-        Table* table = push_array(hephaestus.arena, Table, 1);
-
-        if (hephaestus.table == NULL)
-        {
-          hephaestus.table = table;
-        }
-        else
-        {
-          Table* table_node = hephaestus.table;
-          while (table_node->next != NULL) table_node = table_node->next;
-          table_node = table;
-        }
-
+        Table* table = &hephaestus.table[hephaestus.table_count++];
         advance_iterator(&token_iterator, true);
 
         // table name
@@ -349,7 +409,6 @@ process_tokens(Token_Array* array)
 
           while (token_iterator.current_token->kind != Token_ParenClose && token_iterator.current_token->kind != Token_EOF)
           {
-
             string8_list_push(scratch.arena, &columns, token_iterator.current_token->value);
             advance_iterator(&token_iterator, true);
           }
@@ -374,68 +433,51 @@ process_tokens(Token_Array* array)
           }
         }
 
+        table->rows = push_array(hephaestus.arena, Table_Row, HPH_MAX_ROWS);
+        table->rows_count = 0;
+
         // expect '{' ... '}' for table body
         if (token_iterator.current_token->kind == Token_BraceOpen)
         {
           advance_iterator(&token_iterator, true);
-
-          // Count number of rows
-          {
-            Token_Iterator row_counter_iterator = token_iterator;
-            s32 braces = 0;
-            b32 last_was_close_brace = false;
-            while (braces >= 0)
-            {
-              advance_iterator(&row_counter_iterator, true);
-              if (row_counter_iterator.current_token->kind == Token_BraceOpen && braces == 0)
-              {
-                braces += 1;
-                table->rows_count += 1;
-              }
-            
-              if (row_counter_iterator.current_token->kind == Token_BraceClose)
-              {
-                if (last_was_close_brace)
-                {
-                  break;
-                }
-                last_was_close_brace = true;
-                if (braces == 1)
-                {
-                  braces -= 1;
-                }
-              }
-              else
-              {
-                last_was_close_brace = false;
-              }
-            }
-          }
 
           // Parse rows
           while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
           {
             if (token_iterator.current_token->kind == Token_BraceOpen)
             {
-              // table row entry
+              // New row
+              Table_Row* row = &table->rows[table->rows_count++];
+              row->entries = push_array(hephaestus.arena, Table_Entry, HPH_MAX_ENTRIES_PER_ROW);
+              row->entries_count = 0;
+
+              advance_iterator(&token_iterator, true);
+              u32 column_index = 0;
               while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
               {
-                advance_iterator(&token_iterator, true);
-
-                if (token_iterator->current_token->kind == Token_Backtick)
+                if (token_iterator.current_token->kind == Token_Backtick)
                 {
-                
+                  Template_String8 template_string = parse_template_string(&token_iterator);
+                  row->entries[row->entries_count].value = template_string.string;
+                  row->entries[row->entries_count].column_index = column_index;
+                  row->entries_count += 1;
+                  column_index += 1;
                 }
                 else
                 {
-                  String8 value = token_iterator->current_token.value;
+                  String8 value = token_iterator.current_token->value;
                   advance_iterator(&token_iterator, false);
-                  while (!is_token_whitespace(token_iterator->current_token))
+                  while (!is_token_whitespace(token_iterator.current_token))
                   {
-                    value = string8_concat(scratch.arena, value, token_iterator.current_token);
+                    value = string8_concat(scratch.arena, value, token_iterator.current_token->value);
                     advance_iterator(&token_iterator, false);
                   }
+                  row->entries[row->entries_count].value = value;
+                  row->entries[row->entries_count].column_index = column_index;
+                  row->entries_count += 1;
+                  column_index += 1;
                 }
+                advance_iterator(&token_iterator, true);
 
               }
               if (token_iterator.current_token->kind == Token_BraceClose)
@@ -448,6 +490,7 @@ process_tokens(Token_Array* array)
               advance_iterator(&token_iterator, true);
             }
           }
+
           if (token_iterator.current_token->kind == Token_BraceClose)
           {
             advance_iterator(&token_iterator, true);
@@ -468,20 +511,60 @@ process_tokens(Token_Array* array)
 
         advance_iterator(&token_iterator, true);
 
+        Generator* generator = &hephaestus.generator[hephaestus.generator_count++];
+        generator->command_queue = push_array(hephaestus.arena, Generator_Command, HPH_MAX_GENERATOR_COMMANDS);
+
         while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
         {
           if (token_iterator.current_token->kind == Token_Backtick)
           {
             // Code block
-            advance_iterator(&token_iterator, true);
+            Template_String8 template_string = parse_template_string(&token_iterator);
+            generator->command_queue[generator->command_count].kind  = Generator_Command_String;
+            generator->command_queue[generator->command_count].table = NULL; // These don't need table reference
+            generator->command_queue[generator->command_count].template_string = template_string;
+
+            generator->command_count += 1;
           }
           else if (token_iterator.current_token->kind == Token_At)
           {
             advance_iterator(&token_iterator, true);
             if (string8_match(token_iterator.current_token->value, S("foreach"), false))
             {
-              // Foreach block
+              Table* table_ptr = NULL;
               advance_iterator(&token_iterator, true);
+              if (token_iterator.current_token->kind == Token_ParenOpen)
+              {
+                advance_iterator(&token_iterator, true);
+                for (u32 i = 0; i < hephaestus.table_count; i += 1)
+                {
+                  if (string8_match(token_iterator.current_token->value, hephaestus.table[i].name, true))
+                  {
+                    table_ptr = &hephaestus.table[i];
+
+                    // Ensure proper closure
+                    advance_iterator(&token_iterator, true);
+                    if (token_iterator.current_token->kind != Token_ParenClose)
+                    {
+                      hph_fatal(S("Expected ')' after table name."));
+                    }
+                    advance_iterator(&token_iterator, true);
+                    break;
+                  }
+                }
+              }
+              else
+              {
+                hph_fatal(S("Expected table name between () after foreach. E.g. @foreach(Table_Name) `My $(template) string.`"));
+              }
+
+              // Foreach block
+              Template_String8 template_string = parse_template_string(&token_iterator);
+              generator->command_queue[generator->command_count].kind  = Generator_Command_Foreach;
+              generator->command_queue[generator->command_count].table = table_ptr; // These don't need table reference
+              generator->command_queue[generator->command_count].template_string = template_string;
+
+              generator->command_count += 1;
             }
           }
           else
@@ -508,13 +591,14 @@ process_tokens(Token_Array* array)
 function b32
 advance_iterator(Token_Iterator* iterator, b32 skip_whitespace)
 {
-  b32 result = true;
-
   if (iterator->cursor + 1 >= iterator->array->count)
   {
     hph_warn(S("Tried to advance token iterator beyond max."));
     return false;
   }
+
+  b32 result = true;
+  b32 am_i_a_string = (iterator->current_token->kind == Token_Backtick); // If it is a string, we ignore the comments rule
 
   iterator->cursor += 1;
   iterator->current_token = &iterator->array->tokens[iterator->cursor];
@@ -524,10 +608,15 @@ advance_iterator(Token_Iterator* iterator, b32 skip_whitespace)
     // always skip comments (defined by //) until newline or carriage return
     if (iterator->current_token->kind == Token_Slash &&
         iterator->cursor + 1 < iterator->array->count &&
-        iterator->array->tokens[iterator->cursor + 1].kind == Token_Slash)
+        iterator->array->tokens[iterator->cursor + 1].kind == Token_Slash &&
+        !am_i_a_string)
     {
       iterator->cursor += 2;
-      if (iterator->cursor >= iterator->array->count) { result = false; break; }
+      if (iterator->cursor >= iterator->array->count)
+      {
+        result = false;
+        break;
+      }
       iterator->current_token = &iterator->array->tokens[iterator->cursor];
 
       while (iterator->current_token->kind != Token_Newline &&
@@ -606,48 +695,141 @@ advance_iterator_to(Token_Iterator* iterator, Token_Kind kind)
   return result;
 }
 
-function String8
+function Template_String8
 parse_template_string(Token_Iterator* iterator)
 {
-  String8 result = {0};
+  Template_String8 result = {0};
 
   if (iterator->current_token->kind != Token_Backtick)
   {
-    hph_fatal(S("function void parse_template_string(Token_Iterator* iterator) requires current token to be a backtick"));
+    hph_fatal(S("parse_template_string() requires current token to be a backtick"));
   }
-  else
+
+  Scratch scratch = scratch_begin(0,0);
+  u32 line   = iterator->current_token->line;
+  u32 column = iterator->current_token->column;
+
+  // skip opening backtick
+  advance_iterator(iterator, false);
+
+  String8_List result_list = {0};
+  u32 string_index = 0;
+
+  for (;;)
   {
-    Scratch scratch = scratch_begin(0,0);
-
-    // For error information
-    u32 line   = iterator->current_token->line;
-    u32 column = iterator->current_token->column;
-
-    // Result
-    advance_iterator(iterator, false);
-
-    String8_List result_list = string8_list_new(hephaestus.arena, iterator->current_token->value);
-
-    for (;;)
+    Token* token = iterator->current_token;
+    if (token->kind == Token_EOF)
     {
-      if (iterator->current_token->kind == Token_EOF)
-      {
-        hph_fatal(Sf(scratch.arena, "Backtick string (starting at L:%d C:%d) not closed until the end of the file.", line, column));
-        scratch_end(&scratch);
-      }
-      if (iterator->current_token->kind == Token_Backtick)
-      {
-        break;
-      }
-      string8_list_push(hephaestus.arena, &result_list, iterator->current_token->value);
-      advance_iterator(iterator, false);
+      hph_fatal(Sf(scratch.arena, "Backtick string (starting at L:%u C:%u) not closed.", line, column));
+    }
+    if (token->kind == Token_Backtick)
+    {
+      break;
     }
 
-    result = string8_list_join(hephaestus.arena, &result_list);
-    advance_iterator(iterator, false); // Skip last backtick
-    scratch_end(&scratch);
+    if (token->kind == Token_Dollar)
+    {
+      advance_iterator(iterator, false);
+      if (iterator->current_token->kind != Token_ParenOpen)
+      {
+        hph_fatal(S("Expected '(' after '$' in template string."));
+      }
+
+      advance_iterator(iterator, false);
+
+      Template_String8_Arg* arg = &result.args[result.args_count];
+      arg->kind        = Template_String_Variable_Unknown;
+      arg->method_kind = Template_Arg_Method_None;
+      arg->start_index = string_index;
+
+      if (iterator->current_token->kind == Token_At)
+      {
+        // Special variable
+        advance_iterator(iterator, false);
+        String8 name = iterator->current_token->value;
+
+        if (string8_match(name, S("time_now"), false))
+        {
+          arg->kind = Template_String_Variable_Time_Now;
+          arg->arg_name = S("@time_now");
+        }
+        else
+        {
+          hph_fatal(Sf(scratch.arena, "Unknown template special variable @" S_FMT, S_ARG(name)));
+        }
+
+        advance_iterator(iterator, false);
+      }
+      else if (iterator->current_token->kind == Token_String_Identifier)
+      {
+        arg->kind = Template_String_Variable_Replace;
+        arg->arg_name = iterator->current_token->value;
+        advance_iterator(iterator, false);
+        if (iterator->current_token->kind == Token_Dot)
+        {
+          advance_iterator(iterator, false);
+
+          if (string8_match(iterator->current_token->value, S("slice"), true))
+          {
+            advance_iterator(iterator, false);
+
+            if (iterator->current_token->kind != Token_ParenOpen)
+            {
+              hph_fatal(S("Expected '(' after .slice"));
+            }
+            advance_iterator(iterator, false);
+
+            if (iterator->current_token->kind != Token_Number)
+            {
+              hph_fatal(S("Expected integer offset inside .slice(<offset>)"));
+            }
+
+            String8 offset_token = iterator->current_token->value;
+            advance_iterator(iterator, false);
+
+            if (iterator->current_token->kind != Token_ParenClose)
+            {
+              hph_fatal(S("Expected ')' after slice offset"));
+            }
+            advance_iterator(iterator, false);
+
+            s32 offset = atoi(cstring_from_string8(scratch.arena, offset_token));
+            arg->method_kind = Template_Arg_Method_Slice;
+            arg->method_arguments.offset = offset;
+          }
+          else
+          {
+            hph_fatal(Sf(scratch.arena, "Unknown method '" S_FMT "' after '.' in template string.", S_ARG(iterator->current_token->value)));
+          }
+        }
+      }
+      else
+      {
+        hph_fatal(S("Expected identifier or '@' after '$(' in template string."));
+      }
+
+      if (iterator->current_token->kind != Token_ParenClose)
+      {
+        hph_fatal(S("Expected ')' after variable name in template string."));
+      }
+
+      arg->size = 3 + arg->arg_name.size; // "$(" + name + ")"
+      result.args_count += 1;
+      string_index += arg->size;
+
+      advance_iterator(iterator, false); // skip ')'
+    }
+    else
+    {
+      string8_list_push(hephaestus.arena, &result_list, token->value);
+      string_index += token->value.size;
+      advance_iterator(iterator, false);
+    }
   }
 
+  result.string = string8_list_join(hephaestus.arena, &result_list);
+  advance_iterator(iterator, false); // skip closing backtick
+  scratch_end(&scratch);
   return result;
 }
 
@@ -668,5 +850,15 @@ is_token_whitespace(Token* token)
       token->kind == Token_Delete)
   {
     result = true;
+  }
+  return result;
+}
+
+function void
+consume_whitespace(Token_Iterator* iterator)
+{
+  while (is_token_whitespace(iterator->current_token))
+  {
+    advance_iterator(iterator, false);
   }
 }
