@@ -112,7 +112,7 @@ typedef enum
 typedef struct Token Token;
 struct Token
 {
-  Token_Kind type;
+  Token_Kind kind;
   String8 value;
   u32 start_offset;
   u32 end_offset;
@@ -127,6 +127,14 @@ struct Token_Array
   u64 count;
 };
 #define TOKEN_ARRAY_SIZE 4096
+
+typedef struct Token_Iterator Token_Iterator;
+struct Token_Iterator
+{
+  Token_Array* array;
+  Token* current_token;
+  u32 cursor;
+};
 
 typedef struct Lexer Lexer;
 struct Lexer
@@ -148,7 +156,11 @@ function Token_Array* load_all_tokens(String8 file_path);
 function Token        next_token(Lexer* lexer);
 
 function void         parse_tokens(Token_Array* array);
+function void         next_non_whitespace_token(Token_Iterator* iterator);
+function b32          advance_iterator(Token_Iterator* iterator);
+function b32          advance_iterator_to(Token_Iterator* iterator, Token_Kind kind);
 
 #define hph_fatal(str8) emit_fatal(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
+#define hph_warn(str8)  emit_warn(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
 
 #endif // HEPHAESTUS_H

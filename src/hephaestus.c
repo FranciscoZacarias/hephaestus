@@ -47,7 +47,7 @@ entry_point(Command_Line* command_line)
     for (u32 i = 0; i < token_array->count; i += 1)
     {
       Token token = token_array->tokens[i];
-      string8_print_line(Sf(scratch.arena, "Token :: Type:  %s\n         Value: "S_FMT"\n         Line,Col: %d,%d\n", token_kind_string[token.type], S_ARG(token.value), token.line, token.column));
+      string8_print_line(Sf(scratch.arena, "Token :: Kind:  %s\n         Value: "S_FMT"\n         Line,Col: %d,%d\n", token_kind_string[token.kind], S_ARG(token.value), token.line, token.column));
     }
     scratch_end(&scratch);
   }
@@ -85,7 +85,7 @@ load_all_tokens(String8 file_path)
     result->tokens[result->count] = token;
     result->count += 1;
 
-    if (token.type == Token_EOF)
+    if (token.kind == Token_EOF)
       break;
 
     if (result->count >= TOKEN_ARRAY_SIZE)
@@ -109,7 +109,7 @@ next_token(Lexer* lexer)
   // End of file
   if (lexer->current_character >= lexer->file_end)
   {
-    token.type       = Token_EOF;
+    token.kind       = Token_EOF;
     token.value      = S("");
     token.end_offset = token.start_offset;
     return token;
@@ -132,17 +132,17 @@ next_token(Lexer* lexer)
   // Control characters
   switch (c)
   {
-    case ' ':  token.type = Token_Space;          return token;
-    case '\t': token.type = Token_Tab;            return token;
-    case '\n': token.type = Token_Newline;        return token;
-    case '\r': token.type = Token_CarriageReturn; return token;
-    case '\0': token.type = Token_Null;           return token;
-    case '\a': token.type = Token_Bell;           return token;
-    case '\b': token.type = Token_Backspace;      return token;
-    case '\v': token.type = Token_VerticalTab;    return token;
-    case '\f': token.type = Token_FormFeed;       return token;
-    case 0x1B: token.type = Token_Escape;         return token;
-    case 0x7F: token.type = Token_Delete;         return token;
+    case ' ':  token.kind = Token_Space;          return token;
+    case '\t': token.kind = Token_Tab;            return token;
+    case '\n': token.kind = Token_Newline;        return token;
+    case '\r': token.kind = Token_CarriageReturn; return token;
+    case '\0': token.kind = Token_Null;           return token;
+    case '\a': token.kind = Token_Bell;           return token;
+    case '\b': token.kind = Token_Backspace;      return token;
+    case '\v': token.kind = Token_VerticalTab;    return token;
+    case '\f': token.kind = Token_FormFeed;       return token;
+    case 0x1B: token.kind = Token_Escape;         return token;
+    case 0x7F: token.kind = Token_Delete;         return token;
   }
 
   // Numbers
@@ -155,7 +155,7 @@ next_token(Lexer* lexer)
       lexer->current_character += 1;
       lexer->column += 1;
     }
-    token.type = Token_Number;
+    token.kind = Token_Number;
     token.value = (String8){(u64)(lexer->current_character - start), start};
     token.end_offset = (u32)(lexer->current_character - lexer->file_start);
     return token;
@@ -170,7 +170,7 @@ next_token(Lexer* lexer)
       lexer->current_character += 1;
       lexer->column += 1;
     }
-    token.type       = Token_String_Literal;
+    token.kind       = Token_String_Literal;
     token.value      = (String8){(u64)(lexer->current_character - start), start};
     token.end_offset = (u32)(lexer->current_character - lexer->file_start);
     return token;
@@ -179,39 +179,39 @@ next_token(Lexer* lexer)
   // Symbols
   switch (c)
   {
-    case '!':  token.type = Token_Exclamation;  break;
-    case '"':  token.type = Token_Quote;        break;
-    case '\'': token.type = Token_Apostrophe;   break;
-    case '#':  token.type = Token_Hash;         break;
-    case '$':  token.type = Token_Dollar;       break;
-    case '%':  token.type = Token_Percent;      break;
-    case '&':  token.type = Token_Ampersand;    break;
-    case '(':  token.type = Token_ParenOpen;    break;
-    case ')':  token.type = Token_ParenClose;   break;
-    case '*':  token.type = Token_Asterisk;     break;
-    case '+':  token.type = Token_Plus;         break;
-    case ',':  token.type = Token_Comma;        break;
-    case '-':  token.type = Token_Minus;        break;
-    case '.':  token.type = Token_Dot;          break;
-    case '/':  token.type = Token_Slash;        break;
-    case ':':  token.type = Token_Colon;        break;
-    case ';':  token.type = Token_Semicolon;    break;
-    case '<':  token.type = Token_Less;         break;
-    case '=':  token.type = Token_Equals;       break;
-    case '>':  token.type = Token_Greater;      break;
-    case '?':  token.type = Token_Question;     break;
-    case '@':  token.type = Token_At;           break;
-    case '[':  token.type = Token_BracketOpen;  break;
-    case ']':  token.type = Token_BracketClose; break;
-    case '\\': token.type = Token_Backslash;    break;
-    case '^':  token.type = Token_Caret;        break;
-    case '_':  token.type = Token_Underscore;   break;
-    case '`':  token.type = Token_Backtick;     break;
-    case '{':  token.type = Token_BraceOpen;    break;
-    case '}':  token.type = Token_BraceClose;   break;
-    case '|':  token.type = Token_Pipe;         break;
-    case '~':  token.type = Token_Tilde;        break;
-    default:   token.type = Token_Unknown;      break;
+    case '!':  token.kind = Token_Exclamation;  break;
+    case '"':  token.kind = Token_Quote;        break;
+    case '\'': token.kind = Token_Apostrophe;   break;
+    case '#':  token.kind = Token_Hash;         break;
+    case '$':  token.kind = Token_Dollar;       break;
+    case '%':  token.kind = Token_Percent;      break;
+    case '&':  token.kind = Token_Ampersand;    break;
+    case '(':  token.kind = Token_ParenOpen;    break;
+    case ')':  token.kind = Token_ParenClose;   break;
+    case '*':  token.kind = Token_Asterisk;     break;
+    case '+':  token.kind = Token_Plus;         break;
+    case ',':  token.kind = Token_Comma;        break;
+    case '-':  token.kind = Token_Minus;        break;
+    case '.':  token.kind = Token_Dot;          break;
+    case '/':  token.kind = Token_Slash;        break;
+    case ':':  token.kind = Token_Colon;        break;
+    case ';':  token.kind = Token_Semicolon;    break;
+    case '<':  token.kind = Token_Less;         break;
+    case '=':  token.kind = Token_Equals;       break;
+    case '>':  token.kind = Token_Greater;      break;
+    case '?':  token.kind = Token_Question;     break;
+    case '@':  token.kind = Token_At;           break;
+    case '[':  token.kind = Token_BracketOpen;  break;
+    case ']':  token.kind = Token_BracketClose; break;
+    case '\\': token.kind = Token_Backslash;    break;
+    case '^':  token.kind = Token_Caret;        break;
+    case '_':  token.kind = Token_Underscore;   break;
+    case '`':  token.kind = Token_Backtick;     break;
+    case '{':  token.kind = Token_BraceOpen;    break;
+    case '}':  token.kind = Token_BraceClose;   break;
+    case '|':  token.kind = Token_Pipe;         break;
+    case '~':  token.kind = Token_Tilde;        break;
+    default:   token.kind = Token_Unknown;      break;
   }
 
   token.value = string8_new(1, lexer->current_character - 1);
@@ -229,36 +229,41 @@ parse_tokens(Token_Array* array)
 
   Scratch scratch = scratch_begin(0,0);
 
-#define next_token() &array->tokens[array->count++]
-  Token* token = next_token();
-  while (token->type != Token_EOF)
+  Token_Iterator token_iterator = {0};
+  token_iterator.array  = array;
+  token_iterator.cursor = 0;
+  token_iterator.current_token = token_iterator.array[token_iterator.cursor];
+
+  Token* token = next_non_whitespace_token(&token_iterator);
+
+  while (token->kind != Token_EOF)
   {
-    if (token->type == Token_At)
+    if (token->kind == Token_At)
     {
       // Parse Config
       if (string8_match(token->value, S("config"), false))
       {
-        while(token->type != Token_BraceOpen) 
+        while(token->kind != Token_BraceOpen) 
         {
-          token = next_token();
+          token = next_non_whitespace_token(&token_iterator);
         }
-        token = next_token();
+        token = next_non_whitespace_token(&token_iterator);
 
-        if (token->type == Token_At)
+        if (token->kind == Token_At)
         {
-          token = next_token();
+          token = next_non_whitespace_token(&token_iterator);
           if (string8_match(token->value, S("output_file_name"), false))
           {
           
           }
-          if (string8_match(token->value, S("output_file_name"), false))
+          if (string8_match(token->value, S("output_file_location"), false))
           {
           
           }
         }
         else
         {
-          hph_fatal(Sf(scratch.arena, "L:%d C:%d Unexpected Token inside @config. Expected Token_At, got "S_FMT"", token->line, token->column, token_kind_string[token->type]));
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Unexpected Token inside @config. Expected Token_At, got "S_FMT"", token->line, token->column, token_kind_string[token->kind]));
         }
       }
 
@@ -276,8 +281,71 @@ parse_tokens(Token_Array* array)
     }
     else
     {
-      hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '@<command>' at the global scope. Instead  got "S_FMT"", token->line, token->column, token_kind_string[token->type]));
+      hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '@<command>' at the global scope. Instead  got "S_FMT"", token->line, token->column, token_kind_string[token->kind]));
     }
   }
   scratch_end(&scratch);
+}
+
+function void
+next_non_whitespace_token(Token_Iterator* iterator)
+{
+  if (advance_iterator(iterator))
+  {
+    while (iterator->current_token->kind == Token_Space          ||
+           iterator->current_token->kind == Token_Tab            ||
+           iterator->current_token->kind == Token_Newline        ||
+           iterator->current_token->kind == Token_CarriageReturn ||
+           iterator->current_token->kind == Token_Null           ||
+           iterator->current_token->kind == Token_Bell           ||
+           iterator->current_token->kind == Token_Backspace      ||
+           iterator->current_token->kind == Token_VerticalTab    ||
+           iterator->current_token->kind == Token_FormFeed       ||
+           iterator->current_token->kind == Token_Escape         ||
+           iterator->current_token->kind == Token_Delete)
+    {
+      if (!advance_iterator(iterator))
+      {
+        break;
+      }
+    }
+  }
+}
+
+function b32
+advance_iterator(Token_Iterator* iterator)
+{
+  b32 result = true;
+  if (iterator->cursor + 1 >= iterator->array->count)
+  {
+    hph_warn(S("Tried to advance token iterator beyond max."));
+    result = false;
+  }
+  else
+  {
+    iterator->cursor += 1;
+    iterator->current_token = &iterator->array->tokens[iterator->cursor];
+  }
+  return result;
+}
+
+function b32
+advance_iterator_to(Token_Iterator* iterator, Token_Kind kind)
+{
+  b32 result = false;
+
+  for (;;)
+  {
+    if (!advance_iterator(iterator))
+    {
+      break;
+    }
+    if (iterator->current_token->kind == kind)
+    {
+      result = true;
+      break;
+    }
+  }
+
+  return result;
 }
