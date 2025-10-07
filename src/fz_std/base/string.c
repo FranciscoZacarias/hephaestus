@@ -447,7 +447,7 @@ string8_split(Arena* arena, String8 str, String8 delimiter)
   String8_List result = {0};
   if (delimiter.size == 0)
   {
-    printf("string8_split: delimiter must not be empty\n");
+		os_console_write(S("string8_split: delimiter must not be empty\n"));
     return result;
   }
 
@@ -724,12 +724,12 @@ u8_to_lower(u8 c)
 function void
 string8_print(String8 str)
 {
-  printf(S_FMT, (s32)str.size, str.str);
+	os_console_write(str);
 }
 
 function void
 string8_print_line(String8 str)
 {
   string8_print(str);
-  printf("\n");
+  os_console_write("\n");
 }

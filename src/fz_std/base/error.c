@@ -15,7 +15,7 @@ log_emit(Log_Level level, String8 message, String8 file, u32 line)
 {
   if (!g_log_context.arena)
   {
-    printf("Global error context not initialized.");
+		string8_print_line(message);
     return;
   }
   Scratch scratch = scratch_begin(0,0);

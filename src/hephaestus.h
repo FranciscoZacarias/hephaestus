@@ -144,6 +144,8 @@ typedef struct Lexer
 function Token_Array* load_all_tokens(String8 file_path);
 function Token        next_token(Lexer* lexer);
 
+
+
 #define hph_fatal(str8) emit_fatal(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
 
 #endif // HEPHAESTUS_H
