@@ -70,7 +70,7 @@ typedef enum
   Token_Escape,              /* '\x1B' */
   Token_Delete,              /* 0x7F */
 
-  Token_String_Literal,      /* sequence of [A-Za-z0-9_] */
+  Token_String_Identifier,   /* sequence of [A-Za-z0-9_] */
   Token_Number,              /* sequence of digits, optional '.' */
 
   Token_Exclamation,         /* ! */
@@ -133,7 +133,7 @@ struct Token_Iterator
 {
   Token_Array* array;
   Token* current_token;
-  u32 cursor;
+  s32 cursor;
 };
 
 typedef struct Lexer Lexer;
@@ -152,13 +152,52 @@ struct Lexer
   Token current_token;
 };
 
-function Token_Array* load_all_tokens(String8 file_path);
-function Token        next_token(Lexer* lexer);
+typedef struct Table_Entry Table_Entry;
+struct Table_Entry
+{
+  String8 value;
+  u64 column_index;
+};
 
-function void         parse_tokens(Token_Array* array);
-function void         next_non_whitespace_token(Token_Iterator* iterator);
-function b32          advance_iterator(Token_Iterator* iterator);
+typedef struct Table_Row Table_Row;
+struct Table_Row
+{
+  Table_Entry* entries;
+  u64 entries_count;
+};
+
+typedef struct Table Table;
+struct Table
+{
+  Table* next;
+
+  Table_Row* rows;
+  u32 rows_count;
+
+  String8  table_name;
+  String8* headers;
+  u32 headers_count;
+};
+
+#define HPH_MAX_TABLES 16
+typedef struct Hephaestus Hephaestus;
+struct Hephaestus
+{
+  String8 output_file_name;
+  String8 output_file_path;
+
+  Table* table;
+};
+
+global Lexer lexer;
+
+function Token_Array* load_all_tokens(String8 file_path);
+function Token        next_token();
+
+function void         process_tokens(Token_Array* array);
+function b32          advance_iterator(Token_Iterator* iterator, b32 skip_whitespace);
 function b32          advance_iterator_to(Token_Iterator* iterator, Token_Kind kind);
+
 
 #define hph_fatal(str8) emit_fatal(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
 #define hph_warn(str8)  emit_warn(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));

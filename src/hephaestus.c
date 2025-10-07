@@ -40,8 +40,10 @@ entry_point(Command_Line* command_line)
     hph_fatal(S("Please provide hph file with -\"/relative/path/to/file\" or --input \"/relative/path/to/file\""));
   }
 
+  // Load tokens
   Token_Array* token_array = load_all_tokens(hph_file_path);
-  
+
+  // Print tokens
   {
     Scratch scratch = scratch_begin(0,0);
     for (u32 i = 0; i < token_array->count; i += 1)
@@ -51,6 +53,9 @@ entry_point(Command_Line* command_line)
     }
     scratch_end(&scratch);
   }
+  
+  // Process tokens
+  process_tokens(token_array);
 
   system("pause");
 }
@@ -58,7 +63,6 @@ entry_point(Command_Line* command_line)
 function Token_Array*
 load_all_tokens(String8 file_path)
 {
-  Lexer lexer = {0};
   lexer.arena = arena_alloc();
 
   Token_Array* result = push_array(lexer.arena, Token_Array, 1);
@@ -99,15 +103,15 @@ load_all_tokens(String8 file_path)
 }
 
 function Token
-next_token(Lexer* lexer)
+next_token()
 {
   Token token = {0};
-  token.start_offset = (u32)(lexer->current_character - lexer->file_start);
-  token.line         = lexer->line;
-  token.column       = lexer->column;
+  token.start_offset = (u32)(lexer.current_character - lexer.file_start);
+  token.line         = lexer.line;
+  token.column       = lexer.column;
 
   // End of file
-  if (lexer->current_character >= lexer->file_end)
+  if (lexer.current_character >= lexer.file_end)
   {
     token.kind       = Token_EOF;
     token.value      = S("");
@@ -116,18 +120,18 @@ next_token(Lexer* lexer)
   }
 
   // Move lexer
-  u8 c = *lexer->current_character++;
+  u8 c = *lexer.current_character++;
   if (c == '\n')
   {
-    lexer->line += 1;
-    lexer->column = 1;
+    lexer.line += 1;
+    lexer.column = 1;
   }
   else
   {
-    lexer->column += 1;
+    lexer.column += 1;
   }
 
-  token.end_offset = (u32)(lexer->current_character - lexer->file_start);
+  token.end_offset = (u32)(lexer.current_character - lexer.file_start);
 
   // Control characters
   switch (c)
@@ -148,31 +152,42 @@ next_token(Lexer* lexer)
   // Numbers
   if (u8_is_digit(c))
   {
-    u8* start = lexer->current_character - 1;
-    while (lexer->current_character < lexer->file_end &&
-           (u8_is_digit(*lexer->current_character) || *lexer->current_character == '.'))
+    u8* start = lexer.current_character - 1;
+    while (lexer.current_character < lexer.file_end &&
+           (u8_is_digit(*lexer.current_character) || *lexer.current_character == '.'))
     {
-      lexer->current_character += 1;
-      lexer->column += 1;
+      lexer.current_character += 1;
+      lexer.column += 1;
     }
     token.kind = Token_Number;
-    token.value = (String8){(u64)(lexer->current_character - start), start};
-    token.end_offset = (u32)(lexer->current_character - lexer->file_start);
+    token.value = (String8){(u64)(lexer.current_character - start), start};
+    token.end_offset = (u32)(lexer.current_character - lexer.file_start);
     return token;
   }
 
-  // String Literal
-  if (u8_is_alpha(c))
+  // Identifiers
+  if (u8_is_alpha(c) || c == '_')
   {
-    u8* start = lexer->current_character - 1;
-    while (lexer->current_character < lexer->file_end && u8_is_alphanum(*lexer->current_character))
+    u8* start = lexer.current_character - 1;
+
+    // consume valid identifier characters: [A-Za-z0-9_]
+    while (lexer.current_character < lexer.file_end)
     {
-      lexer->current_character += 1;
-      lexer->column += 1;
+      u8 ch = *lexer.current_character;
+      if (u8_is_alphanum(ch) || ch == '_')
+      {
+        lexer.current_character += 1;
+        lexer.column += 1;
+      }
+      else
+      {
+        break;
+      }
     }
-    token.kind       = Token_String_Literal;
-    token.value      = (String8){(u64)(lexer->current_character - start), start};
-    token.end_offset = (u32)(lexer->current_character - lexer->file_start);
+
+    token.kind       = Token_String_Identifier;
+    token.value      = (String8){(u64)(lexer.current_character - start), start};
+    token.end_offset = (u32)(lexer.current_character - lexer.file_start);
     return token;
   }
 
@@ -214,12 +229,12 @@ next_token(Lexer* lexer)
     default:   token.kind = Token_Unknown;      break;
   }
 
-  token.value = string8_new(1, lexer->current_character - 1);
+  token.value = string8_new(1, lexer.current_character - 1);
   return token;
 }
 
 function void
-parse_tokens(Token_Array* array)
+process_tokens(Token_Array* array)
 {
   if (array->count <= 0)
   {
@@ -232,100 +247,245 @@ parse_tokens(Token_Array* array)
   Token_Iterator token_iterator = {0};
   token_iterator.array  = array;
   token_iterator.cursor = 0;
-  token_iterator.current_token = token_iterator.array[token_iterator.cursor];
+  token_iterator.current_token = &token_iterator.array->tokens[token_iterator.cursor];
 
-  Token* token = next_non_whitespace_token(&token_iterator);
-
-  while (token->kind != Token_EOF)
+  while (token_iterator.current_token->kind != Token_EOF)
   {
-    if (token->kind == Token_At)
+    if (token_iterator.current_token->kind == Token_At)
     {
+      advance_iterator(&token_iterator, true);
+
       // Parse Config
-      if (string8_match(token->value, S("config"), false))
+      if (string8_match(token_iterator.current_token->value, S("config"), false))
       {
-        while(token->kind != Token_BraceOpen) 
-        {
-          token = next_non_whitespace_token(&token_iterator);
-        }
-        token = next_non_whitespace_token(&token_iterator);
+        advance_iterator(&token_iterator, true);
 
-        if (token->kind == Token_At)
+        if (token_iterator.current_token->kind != Token_BraceOpen)
         {
-          token = next_non_whitespace_token(&token_iterator);
-          if (string8_match(token->value, S("output_file_name"), false))
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '{' after @config", token_iterator.current_token->line, token_iterator.current_token->column));
+        }
+
+        advance_iterator(&token_iterator, true);
+
+        while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
+        {
+          if (token_iterator.current_token->kind == Token_At)
           {
-          
+            advance_iterator(&token_iterator, true);
+
+            if (string8_match(token_iterator.current_token->value, S("output_file_name"), false))
+            {
+              // output_file_name
+              advance_iterator(&token_iterator, true);
+            }
+            else if (string8_match(token_iterator.current_token->value, S("output_file_path"), false))
+            {
+              // handle output_file_location
+              advance_iterator(&token_iterator, true);
+            }
+            else
+            {
+              hph_warn(Sf(scratch.arena, "L:%d C:%d Unknown @config field", token_iterator.current_token->line, token_iterator.current_token->column));
+            }
           }
-          if (string8_match(token->value, S("output_file_location"), false))
+          else
           {
-          
+            advance_iterator(&token_iterator, true);
           }
         }
-        else
+
+        if (token_iterator.current_token->kind == Token_BraceClose)
         {
-          hph_fatal(Sf(scratch.arena, "L:%d C:%d Unexpected Token inside @config. Expected Token_At, got "S_FMT"", token->line, token->column, token_kind_string[token->kind]));
+          advance_iterator(&token_iterator, true);
         }
       }
 
-      // Parse tables
-      else if (string8_match(token->value, S("table"), false))
+      // Parse Table
+      else if (string8_match(token_iterator.current_token->value, S("table"), false))
       {
-        token = next_token();      
+        advance_iterator(&token_iterator, true);
+
+        // table name
+        if (token_iterator.current_token->kind == Token_String_Identifier)
+        {
+          advance_iterator(&token_iterator, true);
+        }
+
+        // expect '(' ... ')' for header
+        if (token_iterator.current_token->kind == Token_ParenOpen)
+        {
+          while (token_iterator.current_token->kind != Token_ParenClose && token_iterator.current_token->kind != Token_EOF)
+          {
+            advance_iterator(&token_iterator, true);
+          }
+          if (token_iterator.current_token->kind == Token_ParenClose)
+          {
+            advance_iterator(&token_iterator, true);
+          }
+        }
+
+        // expect '{' ... '}' for table body
+        if (token_iterator.current_token->kind == Token_BraceOpen)
+        {
+          advance_iterator(&token_iterator, true);
+          while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
+          {
+            if (token_iterator.current_token->kind == Token_BraceOpen)
+            {
+              // table row entry
+              while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
+              {
+                advance_iterator(&token_iterator, true);
+              }
+              if (token_iterator.current_token->kind == Token_BraceClose)
+              {
+                advance_iterator(&token_iterator, true);
+              }
+            }
+            else
+            {
+              advance_iterator(&token_iterator, true);
+            }
+          }
+          if (token_iterator.current_token->kind == Token_BraceClose)
+          {
+            advance_iterator(&token_iterator, true);
+          }
+        }
       }
 
-      // Parse generates
-      else if (string8_match(token->value, S("generate"), false))
+      // Parse Generate
+      else if (string8_match(token_iterator.current_token->value, S("generate"), false))
       {
-        token = next_token();
+        advance_iterator(&token_iterator, true);
+
+        if (token_iterator.current_token->kind != Token_BraceOpen)
+        {
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '{' after @generate", token_iterator.current_token->line, token_iterator.current_token->column));
+        }
+
+        advance_iterator(&token_iterator, true);
+
+        while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
+        {
+          if (token_iterator.current_token->kind == Token_Backtick)
+          {
+            // Code block
+            advance_iterator(&token_iterator, true);
+          }
+          else if (token_iterator.current_token->kind == Token_At)
+          {
+            advance_iterator(&token_iterator, true);
+            if (string8_match(token_iterator.current_token->value, S("foreach"), false))
+            {
+              // Foreach block
+              advance_iterator(&token_iterator, true);
+            }
+          }
+          else
+          {
+            advance_iterator(&token_iterator, true);
+          }
+        }
+
+        if (token_iterator.current_token->kind == Token_BraceClose)
+        {
+          advance_iterator(&token_iterator, true);
+        }
       }
     }
     else
     {
-      hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '@<command>' at the global scope. Instead  got "S_FMT"", token->line, token->column, token_kind_string[token->kind]));
+      advance_iterator(&token_iterator, true);
     }
   }
+
   scratch_end(&scratch);
 }
 
-function void
-next_non_whitespace_token(Token_Iterator* iterator)
-{
-  if (advance_iterator(iterator))
-  {
-    while (iterator->current_token->kind == Token_Space          ||
-           iterator->current_token->kind == Token_Tab            ||
-           iterator->current_token->kind == Token_Newline        ||
-           iterator->current_token->kind == Token_CarriageReturn ||
-           iterator->current_token->kind == Token_Null           ||
-           iterator->current_token->kind == Token_Bell           ||
-           iterator->current_token->kind == Token_Backspace      ||
-           iterator->current_token->kind == Token_VerticalTab    ||
-           iterator->current_token->kind == Token_FormFeed       ||
-           iterator->current_token->kind == Token_Escape         ||
-           iterator->current_token->kind == Token_Delete)
-    {
-      if (!advance_iterator(iterator))
-      {
-        break;
-      }
-    }
-  }
-}
-
 function b32
-advance_iterator(Token_Iterator* iterator)
+advance_iterator(Token_Iterator* iterator, b32 skip_whitespace)
 {
   b32 result = true;
+
   if (iterator->cursor + 1 >= iterator->array->count)
   {
     hph_warn(S("Tried to advance token iterator beyond max."));
-    result = false;
+    return false;
   }
-  else
+
+  iterator->cursor += 1;
+  iterator->current_token = &iterator->array->tokens[iterator->cursor];
+
+  for (;;)
   {
-    iterator->cursor += 1;
-    iterator->current_token = &iterator->array->tokens[iterator->cursor];
+    // always skip comments (defined by //) until newline or carriage return
+    if (iterator->current_token->kind == Token_Slash &&
+        iterator->cursor + 1 < iterator->array->count &&
+        iterator->array->tokens[iterator->cursor + 1].kind == Token_Slash)
+    {
+      iterator->cursor += 2;
+      if (iterator->cursor >= iterator->array->count) { result = false; break; }
+      iterator->current_token = &iterator->array->tokens[iterator->cursor];
+
+      while (iterator->current_token->kind != Token_Newline &&
+             iterator->current_token->kind != Token_CarriageReturn &&
+             iterator->current_token->kind != Token_EOF)
+      {
+        if (iterator->cursor + 1 >= iterator->array->count)
+        {
+          result = false;
+          break;
+        }
+        iterator->cursor += 1;
+        iterator->current_token = &iterator->array->tokens[iterator->cursor];
+      }
+
+      if (iterator->cursor + 1 < iterator->array->count)
+      {
+        iterator->cursor += 1;
+        iterator->current_token = &iterator->array->tokens[iterator->cursor];
+      }
+      else
+      {
+        result = false;
+        break;
+      }
+
+      if (!skip_whitespace)
+      {
+        break;
+      }
+      else
+      {
+        continue;
+      }
+    }
+
+    if (skip_whitespace)
+    {
+      if (iterator->current_token->kind == Token_Space          ||
+          iterator->current_token->kind == Token_Tab            ||
+          iterator->current_token->kind == Token_Newline        ||
+          iterator->current_token->kind == Token_CarriageReturn ||
+          iterator->current_token->kind == Token_Null           ||
+          iterator->current_token->kind == Token_Bell           ||
+          iterator->current_token->kind == Token_Backspace      ||
+          iterator->current_token->kind == Token_VerticalTab    ||
+          iterator->current_token->kind == Token_FormFeed       ||
+          iterator->current_token->kind == Token_Escape         ||
+          iterator->current_token->kind == Token_Delete)
+      {
+        if (iterator->cursor + 1 >= iterator->array->count) { result = false; break; }
+        iterator->cursor += 1;
+        iterator->current_token = &iterator->array->tokens[iterator->cursor];
+        continue;
+      }
+    }
+
+    break;
   }
+
   return result;
 }
 
@@ -336,7 +496,7 @@ advance_iterator_to(Token_Iterator* iterator, Token_Kind kind)
 
   for (;;)
   {
-    if (!advance_iterator(iterator))
+    if (!advance_iterator(iterator, false))
     {
       break;
     }
@@ -348,4 +508,38 @@ advance_iterator_to(Token_Iterator* iterator, Token_Kind kind)
   }
 
   return result;
+}
+
+function void
+parse_template_string(Token_Iterator* iterator)
+{
+  if (iterator->current_token->kind != Token_Backtick)
+  {
+    hph_fatal(S("function void parse_template_string(Token_Iterator* iterator) requires current token to be a backtick"));
+  }
+  else
+  {
+    Scratch scratch = scratch_begin(0,0);
+
+    // For error information
+    u32 line   = iterator->current_token->line;
+    u32 column = iterator->current_token->column;
+
+    // Result
+    advance_iterator(iterator, false);
+
+    for (;;)
+    {
+      if (iterator->current_token->kind == Token_EOF)
+      {
+        hph_fatal(Sf(scratch.arena, "Backtick string (starting at L:%d C:%d) not closed until the end of the file.", line, column));
+        scratch_end(&scratch);
+      }
+      if (iterator->current_token->kind == Token_Backtick)
+      {
+        break;
+      }
+    }
+    scratch_end(&scratch);
+  }
 }

@@ -1,9 +1,13 @@
 
-// Config
+// Config 
+
+// Another comment // Another 
+//comment
+
 @config
 {
   @output_file_name ``
-  @output_file_location ``
+  @output_file_path ``
 }
 
 @table // Defines stacks for different types
