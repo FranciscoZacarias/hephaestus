@@ -133,7 +133,7 @@ struct Token_Iterator
 {
   Token_Array* array;
   Token* current_token;
-  s32 cursor;
+  u32 cursor;
 };
 
 typedef struct Lexer Lexer;

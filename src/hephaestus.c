@@ -378,6 +378,41 @@ process_tokens(Token_Array* array)
         if (token_iterator.current_token->kind == Token_BraceOpen)
         {
           advance_iterator(&token_iterator, true);
+
+          // Count number of rows
+          {
+            Token_Iterator row_counter_iterator = token_iterator;
+            s32 braces = 0;
+            b32 last_was_close_brace = false;
+            while (braces >= 0)
+            {
+              advance_iterator(&row_counter_iterator, true);
+              if (row_counter_iterator.current_token->kind == Token_BraceOpen && braces == 0)
+              {
+                braces += 1;
+                table->rows_count += 1;
+              }
+            
+              if (row_counter_iterator.current_token->kind == Token_BraceClose)
+              {
+                if (last_was_close_brace)
+                {
+                  break;
+                }
+                last_was_close_brace = true;
+                if (braces == 1)
+                {
+                  braces -= 1;
+                }
+              }
+              else
+              {
+                last_was_close_brace = false;
+              }
+            }
+          }
+
+          // Parse rows
           while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
           {
             if (token_iterator.current_token->kind == Token_BraceOpen)
