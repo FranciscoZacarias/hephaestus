@@ -197,7 +197,7 @@ function Token        next_token();
 function void         process_tokens(Token_Array* array);
 function b32          advance_iterator(Token_Iterator* iterator, b32 skip_whitespace);
 function b32          advance_iterator_to(Token_Iterator* iterator, Token_Kind kind);
-
+function void         parse_template_string(Token_Iterator* iterator);
 
 #define hph_fatal(str8) emit_fatal(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
 #define hph_warn(str8)  emit_warn(string8_concat(g_log_context.arena, S("[Hephaestus]: "), str8));
