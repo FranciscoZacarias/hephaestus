@@ -68,7 +68,7 @@ Supports looping through table rows and inserting variable values.
 @generate
 {
   `// @Hephaestus generated code $(@time_now) \n\n`
-  @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type-1) bottom_val;\n};\n\n\n`
+  @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type) bottom_val;\n};\n\n\n`
 }
 ```
 
@@ -126,7 +126,7 @@ $(name)-1 → "Nod"
 @generate
 {
   `// @Hephaestus generated code $(@time_now) \n\n`
-  @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type-1) bottom_val;\n};\n\n\n`
+  @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type) bottom_val;\n};\n\n\n`
 }
 ```
 
@@ -140,7 +140,7 @@ struct node_stack
 {
   UI_Node* data[32];
   u32 top_index;
-  UI_Node bottom_val;
+  UI_Node* bottom_val;
 };
 
 // Row 1
@@ -149,7 +149,7 @@ struct top_left_stack
 {
   Vec2f32 data[32];
   u32 top_index;
-  Vec2f3 bottom_val;
+  Vec2f32 bottom_val;
 };
 
 // Row 2
@@ -158,9 +158,10 @@ struct size_x_stack
 {
   f32 data[32];
   u32 top_index;
-  f3 bottom_val;
+  f32 bottom_val;
 };
 
 ...
 ```
 Each table row generates a new struct block.
+
