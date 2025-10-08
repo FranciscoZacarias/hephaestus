@@ -48,24 +48,9 @@ entry_point(Command_Line* command_line)
   hephaestus.generator       = push_array(hephaestus.arena, Generator, HPH_MAX_GENERATORS);
   hephaestus.generator_count = 0;
 
-  // Load tokens
   Token_Array* token_array = load_all_tokens(hph_file_path);
-
-  // Print tokens
-  {
-    Scratch scratch = scratch_begin(0,0);
-    for (u32 i = 0; i < token_array->count; i += 1)
-    {
-      Token token = token_array->tokens[i];
-      string8_print_line(Sf(scratch.arena, "Token :: Kind:  %s\n         Value: "S_FMT"\n         Line,Col: %d,%d\n", token_kind_string[token.kind], S_ARG(token.value), token.line, token.column));
-    }
-    scratch_end(&scratch);
-  }
-  
-  // Process tokens
   process_tokens(token_array);
-
-  system("pause");
+  run_hephaestus();
 }
 
 function Token_Array*
@@ -364,7 +349,7 @@ process_tokens(Token_Array* array)
               // handle output_file_location
               advance_iterator(&token_iterator, true);
               Template_String8 template_string = parse_template_string(&token_iterator);
-              hephaestus.output_file_path = template_string.string;
+              hephaestus.output_file_path = os_absolute_path_from_relative_path(hephaestus.arena, template_string.string);
               if (hephaestus.output_file_path.size == 0)
               {
                 hph_fatal(S("Must provide a valid @output_file_path inside @config."));
@@ -588,6 +573,109 @@ process_tokens(Token_Array* array)
   scratch_end(&scratch);
 }
 
+function void
+run_hephaestus()
+{
+  // Build output file
+  String8 file = string8_concat(hephaestus.arena, hephaestus.output_file_path, hephaestus.output_file_name);
+  String8 content = S("");
+
+  for (u32 generator_index = 0; generator_index < hephaestus.generator_count; generator_index += 1)
+  {
+    Generator* generator = &hephaestus.generator[generator_index];
+
+    for (u32 commang_index = 0; commang_index < generator->command_count; commang_index += 1)
+    {
+      Generator_Command* command = &generator->command_queue[commang_index];
+      switch (command->kind)
+      {
+        case Generator_Command_String:
+        {
+          for (u32 arg_index = 0; arg_index < command->template_string.args_count; arg_index += 1)
+          {
+            String8 string = string8_copy(hephaestus.arena, command->template_string.string);
+            Template_String8_Arg* arg = &command->template_string.args[arg_index];
+            switch (arg->kind)
+            {
+              // Replace with date
+              case Template_String_Variable_Time_Now:
+              {
+                String8 time_now = os_datetime_to_string8(hephaestus.arena, os_datetime_now(), false);
+                string = string8_place_at(hephaestus.arena, string, time_now, arg->start_index);
+              } break;
+              default:
+              {
+                hph_fatal(S("Argument kind not allowed inside a string command."));
+              }
+            }
+            content = string8_concat(hephaestus.arena, content, string);
+          }
+        } break;
+        case Generator_Command_Foreach:
+        {
+          for (u32 row_index = 0; row_index < command->table->rows_count; row_index += 1)
+          {
+            Table_Row* row = &command->table->rows[row_index];
+            String8 string = string8_copy(hephaestus.arena, command->template_string.string);
+
+            for (u32 arg_index = 0; arg_index < command->template_string.args_count; arg_index += 1)
+            {
+              Template_String8_Arg* arg = &command->template_string.args[arg_index];
+              switch (arg->kind)
+              {
+                // Replace with date
+                case Template_String_Variable_Time_Now:
+                {
+                  String8 time_now = os_datetime_to_string8(hephaestus.arena, os_datetime_now(), false);
+                  string = string8_place_at(hephaestus.arena, string, time_now, arg->start_index);
+                } break;
+
+                // Place row index
+                case Template_String_Variable_Index:
+                {
+                  string = string8_place_at(hephaestus.arena, string, Sf(hephaestus.arena, "%d", row_index), arg->start_index);
+                } break;
+
+                // Replace with respective table row/col value
+                case Template_String_Variable_Replace:
+                {
+                  u32 index = U32_MAX;
+                  for (u32 column_idx = 0; column_idx < command->table->columns_count; column_idx += 1)
+                  {
+                    if (string8_match(arg->arg_name, command->table->columns[column_idx], true))
+                    {
+                      index = column_idx;
+                    }
+                  }
+                  if (index == U32_MAX)
+                  {
+                    hph_fatal(Sf(hephaestus.arena, "Unable to find header "S_FMT" in table "S_FMT"", S_ARG(arg->arg_name), S_ARG(command->table->name)));
+                  }
+                  Table_Entry entry = row->entries[index];
+
+                  string = string8_place_at(hephaestus.arena, string, entry.value, arg->start_index);
+                } break;
+                default:
+                {
+                  hph_fatal(S("Argument kind not allowed inside a string command."));
+                }
+              }
+            }
+            content = string8_concat(hephaestus.arena, content, string);
+          }
+        } break;
+        default:
+        {
+          hph_fatal(S("Unhandled command kind."));
+        } break;
+      }
+    }
+  }
+
+  os_file_wipe(file);
+  os_file_append(file, content.str, content.size);
+}
+
 function b32
 advance_iterator(Token_Iterator* iterator, b32 skip_whitespace)
 {
@@ -698,12 +786,13 @@ advance_iterator_to(Token_Iterator* iterator, Token_Kind kind)
 function Template_String8
 parse_template_string(Token_Iterator* iterator)
 {
-  Template_String8 result = {0};
-
   if (iterator->current_token->kind != Token_Backtick)
   {
     hph_fatal(S("parse_template_string() requires current token to be a backtick"));
   }
+
+  Template_String8 result = {0};
+  result.args = push_array(hephaestus.arena, Template_String8_Arg, MAX_TEMPLATE_STRING_ARGS);
 
   Scratch scratch = scratch_begin(0,0);
   u32 line   = iterator->current_token->line;
@@ -897,9 +986,39 @@ parse_template_string(Token_Iterator* iterator)
     }
     else
     {
-      string8_list_push(hephaestus.arena, &result_list, token->value);
-      string_index += token->value.size;
-      advance_iterator(iterator, false);
+      Token* token = iterator->current_token;
+      Token* next_token = 0;
+      if (iterator->cursor + 1 < iterator->array->count)
+      {
+        next_token = &iterator->array->tokens[iterator->cursor + 1];
+      }
+
+      // Replace string "\n" with new line byte
+      if (token->value.size == 1 && token->value.str[0] == '\\' && next_token && next_token->value.size > 0 && next_token->value.str[0] == 'n')
+      {
+        u8* new_line = push_array(hephaestus.arena, u8, 1);
+        new_line[0] = '\n';
+        string8_list_push(hephaestus.arena, &result_list, (String8){1, new_line});
+        string_index += 1;
+
+        // push leftover after 'n' if present
+        if (next_token->value.size > 1)
+        {
+          String8 leftover = { next_token->value.size - 1, next_token->value.str + 1 };
+          string8_list_push(hephaestus.arena, &result_list, leftover);
+          string_index += leftover.size;
+        }
+
+        // advance twice
+        advance_iterator(iterator, false);
+        advance_iterator(iterator, false);
+      }
+      else
+      {
+        string8_list_push(hephaestus.arena, &result_list, token->value);
+        string_index += token->value.size;
+        advance_iterator(iterator, false);
+      }
     }
   }
 

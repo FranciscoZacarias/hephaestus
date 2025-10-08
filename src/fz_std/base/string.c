@@ -117,6 +117,25 @@ string8_slice(String8 str, u64 start, u64 end)
 }
 
 function String8
+string8_place_at(Arena* arena, String8 str, String8 string_to_place, u64 place_at)
+{
+  if (place_at > str.size)
+  {
+    place_at = str.size;
+  }
+
+  u64 new_size = str.size + string_to_place.size;
+  u8* new_data = push_array(arena, u8, new_size);
+
+  MemoryCopy(new_data, str.str, place_at); // prefix
+  MemoryCopy(new_data + place_at, string_to_place.str, string_to_place.size); // insert
+  MemoryCopy(new_data + place_at + string_to_place.size, str.str + place_at, str.size - place_at); // suffix
+
+  return (String8){ new_size, new_data };
+}
+
+
+function String8
 string8_trim(String8 str)
 {
   u64 start = 0;

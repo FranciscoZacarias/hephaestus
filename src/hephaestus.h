@@ -188,32 +188,6 @@ struct Lexer
   Token current_token;
 };
 
-typedef struct Template_String8_Arg Template_String8_Arg;
-struct Template_String8_Arg
-{
-  Template_String_Variable_Kind kind;
-
-  String8 arg_name; /* String inside $(...). E.g. For $(name), arg_name is 'name' */
-  u32 start_index;  /* Index of $ into the string */
-  u32 size;         /* Size of the whole arg. E.g. For $(name), size <- 7 */
-
-  Template_Arg_Method_Kind method_kind;
-  union
-  {
-    s32 offset; /* Argument for .truncate(<offset>). */
-    s32 operand; /* Argument for math operations (+ - * / %) */
-  } method_arguments;
-};
-
-#define MAX_TEMPLATE_STRING_ARGS 16
-typedef struct Template_String8 Template_String8;
-struct Template_String8
-{
-  String8 string;
-  Template_String8_Arg args[MAX_TEMPLATE_STRING_ARGS];
-  u32 args_count;
-};
-
 typedef struct Table_Entry Table_Entry;
 struct Table_Entry
 {
@@ -239,6 +213,32 @@ struct Table
   String8  name;
   String8* columns;
   u32 columns_count;
+};
+
+typedef struct Template_String8_Arg Template_String8_Arg;
+struct Template_String8_Arg
+{
+  Template_String_Variable_Kind kind;
+
+  String8 arg_name; /* String inside $(...). E.g. For $(name), arg_name is 'name' */
+  u32 start_index;  /* Index of $ into the string */
+  u32 size;         /* Size of the whole arg. E.g. For $(name), size <- 7 */
+
+  Template_Arg_Method_Kind method_kind;
+  union
+  {
+    s32 offset; /* Argument for .truncate(<offset>). */
+    s32 operand; /* Argument for math operations (+ - * / %) */
+  } method_arguments;
+};
+
+#define MAX_TEMPLATE_STRING_ARGS 16
+typedef struct Template_String8 Template_String8;
+struct Template_String8
+{
+  String8 string;
+  Template_String8_Arg* args;
+  u32 args_count;
 };
 
 typedef struct Generator_Command Generator_Command;
@@ -277,9 +277,10 @@ global Lexer lexer;
 global Hephaestus hephaestus;
 
 function Token_Array* load_all_tokens(String8 file_path);
-function Token        next_token();
+function void         process_tokens(Token_Array* array);
+function void         run_hephaestus();
 
-function void             process_tokens(Token_Array* array);
+function Token            next_token();
 function b32              advance_iterator(Token_Iterator* iterator, b32 skip_whitespace);
 function b32              advance_iterator_to(Token_Iterator* iterator, Token_Kind kind);
 function Template_String8 parse_template_string(Token_Iterator* iterator);

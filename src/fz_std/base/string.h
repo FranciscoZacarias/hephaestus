@@ -36,6 +36,7 @@ function String8 string8_concat(Arena* arena, String8 a, String8 b); /* Allocate
 function String8 string8_replace_first(Arena* arena, String8 str, String8 a, String8 b); /* Replaces string a with string c in string str */
 function String8 string8_replace_all(Arena *arena, String8 str, String8 a, String8 b); /* Replaces all instances of a substr a with substr b */
 function String8 string8_slice(String8 str, u64 start, u64 end); /* Extract substring from start to end (exclusive). */
+function String8 string8_place_at(Arena* arena, String8 str, String8 string_to_place, u64 place_at); /* Inserts string_to_place inside str starting at place_at location */
 function String8 string8_trim(String8 str); /* Remove leading and trailing whitespace. */
 function String8 string8_trim_left(String8 str);
 function String8 string8_trim_right(String8 str);

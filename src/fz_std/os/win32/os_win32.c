@@ -346,7 +346,6 @@ os_file_append(String8 path, u8* data, u64 data_size)
   return (u32)written;
 }
 
-
 function b32
 os_file_wipe(String8 path)
 {
