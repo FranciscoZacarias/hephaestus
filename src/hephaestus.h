@@ -130,21 +130,6 @@ typedef enum
   Template_String_Variable_Count,
 } Template_String_Variable_Kind;
 
-typedef enum 
-{
-  Template_Arg_Method_None = 0,
-
-  Template_Arg_Method_Truncate,
-
-  Template_Arg_Method_Add,
-  Template_Arg_Method_Sub,
-  Template_Arg_Method_Mul,
-  Template_Arg_Method_Div,
-  Template_Arg_Method_Mod,
-
-  Template_Arg_Method_Count,
-} Template_Arg_Method_Kind;
-
 typedef struct Token Token;
 struct Token
 {
@@ -220,16 +205,8 @@ struct Template_String8_Arg
 {
   Template_String_Variable_Kind kind;
 
-  String8 arg_name; /* String inside $(...). E.g. For $(name), arg_name is 'name' */
+  String8 name; /* String inside $(...). E.g. For $(name), arg_name is 'name' */
   u32 start_index;  /* Index of $ into the string */
-  u32 size;         /* Size of the whole arg. E.g. For $(name), size <- 7 */
-
-  Template_Arg_Method_Kind method_kind;
-  union
-  {
-    s32 offset; /* Argument for .truncate(<offset>). */
-    s32 operand; /* Argument for math operations (+ - * / %) */
-  } method_arguments;
 };
 
 #define MAX_TEMPLATE_STRING_ARGS 16

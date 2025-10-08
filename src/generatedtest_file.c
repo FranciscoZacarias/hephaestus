@@ -1,112 +1,112 @@
-// @Hephaestus generated code 2025-October-08 13:14:30 
+// @Hephaestus generated code 2025-October-08 15:53:23 
 
 // Row 0
-typedef struct  ;
- strunodect _nodestack
+typedef struct node node;
+struct node_stack
 {
-   danodeta[max];
-  u32UI_Node* top_index;
-   bottom_val;
+  UI_Node* data[32];
+  u32 top_index;
+  UI_Node bottom_val;
 };
-UI_Node*
+
 
 // Row 1
-typedef struct  ;
- strutop_lefttop_leftct _stacktop_left
+typedef struct top_left top_left;
+struct top_left_stack
 {
-   dataVec2f32[max];
+  Vec2f32 data[32];
   u32 top_index;
-   bottVec2f32om_val;
+  Vec2f3 bottom_val;
 };
 
 
 // Row 2
-typedef struct  ;
- strusize_xctsize_x _stack
+typedef struct size_x size_x;
+struct size_x_stack
 {
- size_x  data[max];f32
+  f32 data[32];
   u32 top_index;
-   bottom_val;
-};f32
+  f3 bottom_val;
+};
 
 
 // Row 3
-typedef struct  ;
- strusize_yctsize_y _stack
+typedef struct size_y size_y;
+struct size_y_stack
 {
- size_y  data[max];f32
+  f32 data[32];
   u32 top_index;
-   bottom_val;
-};f32
+  f3 bottom_val;
+};
 
 
 // Row 4
-typedef struct  ;
- struspacing_spacing_yyct _staspacing_yck
+typedef struct spacing_y spacing_y;
+struct spacing_y_stack
 {
-   df32ata[max];
+  f32 data[32];
   u32 top_index;
-   bottof32m_val;
+  f3 bottom_val;
 };
 
 
 // Row 5
-typedef struct  ;
- strualignmenalignment_kindt_kalignment_kindindcUI_Alignment_Kindt _stack
+typedef struct alignment_kind alignment_kind;
+struct alignment_kind_stack
 {
-   data[maUI_Alignment_Kindx];
+  UI_Alignment_Kind data[32];
   u32 top_index;
-   bottom_val;
+  UI_Alignment_Kin bottom_val;
 };
 
 
 // Row 6
-typedef struct  ;
- struwidth_kiwidth_kindndct _swidth_kindtack
+typedef struct width_kind width_kind;
+struct width_kind_stack
 {
- UI_Width_Kind  data[max];
-  u32 top_inUI_Width_Kinddex;
-   bottom_val;
+  UI_Width_Kind data[32];
+  u32 top_index;
+  UI_Width_Kin bottom_val;
 };
 
 
 // Row 7
-typedef struct  ;
- struheight_kheight_kindindct height_kind_stack
-UI_Height_Kind{
-   data[max];
-  u32 toUI_Height_Kindp_index;
-   bottom_val;
+typedef struct height_kind height_kind;
+struct height_kind_stack
+{
+  UI_Height_Kind data[32];
+  u32 top_index;
+  UI_Height_Kin bottom_val;
 };
 
 
 // Row 8
-typedef struct  ;
- strunode_colnode_color_schemenode_color_schemeoUI_Node_Color_Schemer_schemect _stack
-UI_Node_Color_Scheme{
-   data[max];
+typedef struct node_color_scheme node_color_scheme;
+struct node_color_scheme_stack
+{
+  UI_Node_Color_Scheme data[32];
   u32 top_index;
-   bottom_val;
+  UI_Node_Color_Schem bottom_val;
 };
 
 
 // Row 9
-typedef struct  ;
- struborder_cborder_colorolorcborder_colort _staColorck
+typedef struct border_color border_color;
+struct border_color_stack
 {
-   data[max];
-  u32 top_indeColorx;
-   bottom_val;
+  Color data[32];
+  u32 top_index;
+  Colo bottom_val;
 };
 
 
 // Row 10
-typedef struct  ;
- strbackgroubackground_colornbackground_colord_Colorcoloruct _stack
+typedef struct background_color background_color;
+struct background_color_stack
 {
-   data[max];
- Color u32 top_index;
-   bottom_val;
+  Color data[32];
+  u32 top_index;
+  Colo bottom_val;
 };
 
 

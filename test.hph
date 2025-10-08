@@ -24,5 +24,5 @@ Stack_Table (name type default_value max)
 @generate
 {
   `// @Hephaestus generated code $(@time_now) \n\n`
-  @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\n struct $(name)_stack\n{\n  $(type) data[max];\n  u32 top_index;\n  $(type.truncate(1)) bottom_val;\n};\n\n\n`
+  @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type-1) bottom_val;\n};\n\n\n`
 }

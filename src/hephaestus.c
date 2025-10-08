@@ -598,14 +598,19 @@ run_hephaestus()
             switch (arg->kind)
             {
               // Replace with date
+              case Template_String_Variable_Unknown: { /* Don't do anything */ } break;
               case Template_String_Variable_Time_Now:
               {
                 String8 time_now = os_datetime_to_string8(hephaestus.arena, os_datetime_now(), false);
-                string = string8_place_at(hephaestus.arena, string, time_now, arg->start_index);
+                string = string8_replace_first(hephaestus.arena, string, S("$(@time_now)"), time_now);
+              } break;
+              case Template_String_Variable_Replace:
+              {
+              
               } break;
               default:
               {
-                hph_fatal(S("Argument kind not allowed inside a string command."));
+                hph_fatal(S("Argument kind not found or not allowed inside a string command."));
               }
             }
             content = string8_concat(hephaestus.arena, content, string);
@@ -627,37 +632,78 @@ run_hephaestus()
                 case Template_String_Variable_Time_Now:
                 {
                   String8 time_now = os_datetime_to_string8(hephaestus.arena, os_datetime_now(), false);
-                  string = string8_place_at(hephaestus.arena, string, time_now, arg->start_index);
+                  string = string8_replace_first(hephaestus.arena, string, S("$(@time_now)"), time_now);
                 } break;
 
                 // Place row index
                 case Template_String_Variable_Index:
                 {
-                  string = string8_place_at(hephaestus.arena, string, Sf(hephaestus.arena, "%d", row_index), arg->start_index);
+                  string = string8_replace_first(hephaestus.arena, string, S("$(@index)"), Sf(hephaestus.arena, "%d", row_index));
                 } break;
 
                 // Replace with respective table row/col value
                 case Template_String_Variable_Replace:
                 {
+                  String8 arg_name = arg->name;
+                  u64 split_index = arg_name.size;
+                  s32 operand = 0;
+
+                  for (u64 i = 0; i < arg_name.size; i += 1)
+                  {
+                    u8 c = arg_name.str[i];
+                    if (c == '+' || c == '-')
+                    {
+                      split_index = i;
+                      String8 num_str = {arg_name.size - i, arg_name.str + i};
+                      operand = atoi(cstring_from_string8(hephaestus.arena, num_str));
+                      break;
+                    }
+                  }
+                  String8 base_name = {split_index, arg_name.str};
+
                   u32 index = U32_MAX;
                   for (u32 column_idx = 0; column_idx < command->table->columns_count; column_idx += 1)
                   {
-                    if (string8_match(arg->arg_name, command->table->columns[column_idx], true))
+                    if (string8_match(base_name, command->table->columns[column_idx], true))
                     {
                       index = column_idx;
                     }
                   }
                   if (index == U32_MAX)
                   {
-                    hph_fatal(Sf(hephaestus.arena, "Unable to find header "S_FMT" in table "S_FMT"", S_ARG(arg->arg_name), S_ARG(command->table->name)));
+                    hph_fatal(Sf(hephaestus.arena, "Unable to find header "S_FMT" in table "S_FMT"", S_ARG(base_name), S_ARG(command->table->name)));
                   }
+
                   Table_Entry entry = row->entries[index];
 
-                  string = string8_place_at(hephaestus.arena, string, entry.value, arg->start_index);
+                  // Handle operands, if they exist. Truncate string or add to number
+                  if (operand != 0)
+                  {
+                    s32 value = F32_MIN;
+                    if (s32_from_string8(entry.value, &value))
+                    {
+                      entry.value = Sf(hephaestus.arena, "%d", operand + value);
+                    }
+                    else
+                    {
+                      // If its not a number, try to truncate
+                      if (operand > 0)
+                      {
+                        entry.value.str  += operand;
+                        entry.value.size -= (u64)operand;
+                      }
+                      else if (operand < 0)
+                      {
+                        entry.value.size -= (u64)(-operand);
+                      }
+                    }
+                  }
+
+                  string = string8_replace_first(hephaestus.arena, string, Sf(hephaestus.arena, "$("S_FMT")", S_ARG(arg->name)), entry.value);
                 } break;
                 default:
                 {
-                  hph_fatal(S("Argument kind not allowed inside a string command."));
+                  hph_fatal(S("Argument kind not found or not allowed inside a string command."));
                 }
               }
             }
@@ -681,7 +727,7 @@ advance_iterator(Token_Iterator* iterator, b32 skip_whitespace)
 {
   if (iterator->cursor + 1 >= iterator->array->count)
   {
-    hph_warn(S("Tried to advance token iterator beyond max."));
+    hph_fatal(S("Tried to advance token iterator beyond max."));
     return false;
   }
 
@@ -790,241 +836,89 @@ parse_template_string(Token_Iterator* iterator)
   {
     hph_fatal(S("parse_template_string() requires current token to be a backtick"));
   }
+  advance_iterator(iterator, true);
+
+  // We handle the template string per byte, so we'll just skip the iterator to the end of the string.
+  String8_List list = string8_list_empty();
+  while (iterator->current_token->kind != Token_Backtick)
+  {
+    if (iterator->current_token->kind == Token_EOF)
+    {
+     hph_fatal(S("Unexpected EOF while parsing backtick string."));
+    }
+
+    string8_list_push(hephaestus.arena, &list, iterator->current_token->value);
+    advance_iterator(iterator, false);
+  }
+  advance_iterator(iterator, false);
+  String8 full_string = string8_list_join(hephaestus.arena, &list);
+
+  String8 search = S("\\n");
+  String8 replacement;
+  replacement.size = 1;
+  replacement.str  = push_array(hephaestus.arena, u8, 1);
+  replacement.str[0] = '\n';
+  full_string = string8_replace_all(hephaestus.arena, full_string, search, replacement);
 
   Template_String8 result = {0};
-  result.args = push_array(hephaestus.arena, Template_String8_Arg, MAX_TEMPLATE_STRING_ARGS);
+  result.args   = push_array(hephaestus.arena, Template_String8_Arg, MAX_TEMPLATE_STRING_ARGS);
+  result.string = full_string;
 
-  Scratch scratch = scratch_begin(0,0);
-  u32 line   = iterator->current_token->line;
-  u32 column = iterator->current_token->column;
-
-  // skip opening backtick
-  advance_iterator(iterator, false);
-
-  String8_List result_list = {0};
-  u32 string_index = 0;
-
-  for (;;)
+#define safe_advance(idx) if ((idx)+1 >= result.string.size) {hph_fatal(S("Incomplete variable in template string"));} else {(idx) += 1; c = result.string.str[(idx)]; }
+  for (u32 i = 0; i < result.string.size; i += 1)
   {
-    Token* token = iterator->current_token;
-    if (token->kind == Token_EOF)
-    {
-      hph_fatal(Sf(scratch.arena, "Backtick string (starting at L:%u C:%u) not closed.", line, column));
-    }
-    if (token->kind == Token_Backtick)
-    {
-      break;
-    }
+    u8 c = result.string.str[i];
 
-    if (token->kind == Token_Dollar)
+    if (c == '$')
     {
-      advance_iterator(iterator, false);
-      if (iterator->current_token->kind != Token_ParenOpen)
-      {
-        hph_fatal(S("Expected '(' after '$' in template string."));
-      }
-
-      advance_iterator(iterator, false);
-
       Template_String8_Arg* arg = &result.args[result.args_count];
-      arg->kind        = Template_String_Variable_Unknown;
-      arg->method_kind = Template_Arg_Method_None;
-      arg->start_index = string_index;
+      result.args_count += 1;
 
-      if (iterator->current_token->kind == Token_At)
+      safe_advance(i);
+      if (c != '(')
       {
-        advance_iterator(iterator, false);
-        String8 name = iterator->current_token->value;
-
-        // Special variables
-        if (string8_match(name, S("time_now"), true))
-        {
-          arg->kind = Template_String_Variable_Time_Now;
-          arg->arg_name = S("@time_now");
-        }
-        else if (string8_match(name, S("index"), true))
-        {
-          arg->kind = Template_String_Variable_Index;
-          arg->arg_name = S("@index");
-        }
-        else
-        {
-          hph_fatal(Sf(scratch.arena, "Unknown template special variable @" S_FMT, S_ARG(name)));
-        }
-
-        advance_iterator(iterator, false);
+        hph_fatal(S("Expected '(' after $ in template string."));
       }
-      else if (iterator->current_token->kind == Token_String_Identifier)
+      safe_advance(i);
+      u8* start = &result.string.str[i];
+      u32 start_index = i;
+      u32 paren_level = 1;
+      while (paren_level > 0)
+      {
+        safe_advance(i);
+        if (c == '(')
+        {
+          paren_level += 1;
+        }
+        else if (c == ')')
+        {
+          paren_level -= 1;
+        }
+      }
+      arg->name    = string8_range(start, &result.string.str[i]);
+      arg->start_index = start_index;
+      safe_advance(i);
+      if (arg->name.size == 0)
+      {
+        hph_fatal(S("Unsupported empty args. Remove $() or add an argument."));
+      }
+
+      if (string8_match(arg->name, S("@time_now"), true))
+      {
+        arg->kind = Template_String_Variable_Time_Now;
+      }
+      else if (string8_match(arg->name, S("@index"), true))
+      {
+        arg->kind = Template_String_Variable_Index;
+      }
+      else
       {
         arg->kind = Template_String_Variable_Replace;
-        arg->arg_name = iterator->current_token->value;
-        advance_iterator(iterator, false);
-
-        if (iterator->current_token->kind == Token_Dot)
-        {
-          advance_iterator(iterator, false);
-
-          if (string8_match(iterator->current_token->value, S("truncate"), true))
-          {
-            advance_iterator(iterator, false);
-
-            if (iterator->current_token->kind != Token_ParenOpen)
-            {
-              hph_fatal(S("Expected '(' after .slice"));
-            }
-            advance_iterator(iterator, false);
-
-            if (iterator->current_token->kind != Token_Number)
-            {
-              hph_fatal(S("Expected integer offset inside .slice(<offset>)"));
-            }
-
-            String8 offset_token = iterator->current_token->value;
-            s32 offset = atoi(cstring_from_string8(scratch.arena, offset_token));
-            arg->method_kind = Template_Arg_Method_Truncate;
-            arg->method_arguments.offset = offset;
-            advance_iterator(iterator, false);
-
-            if (iterator->current_token->kind != Token_ParenClose)
-            {
-              hph_fatal(S("Expected ')' after slice offset"));
-            }
-            advance_iterator(iterator, false);
-
-          }
-          else
-          {
-            hph_fatal(Sf(scratch.arena, "Unknown method '" S_FMT "' after '.' in template string.", S_ARG(iterator->current_token->value)));
-          }
-        }
-        else if (iterator->current_token->kind == Token_Plus)
-        {
-          advance_iterator(iterator, false);
-          
-          if (iterator->current_token->kind != Token_Number)
-          {
-            hph_fatal(S("Cannot do a math operation '+' inside a variable when the variable does no expand to a number."));
-          }
-      
-          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
-          arg->method_kind = Template_Arg_Method_Add;
-          arg->method_arguments.operand = operand;
-          advance_iterator(iterator, false);
-        }
-        else if (iterator->current_token->kind == Token_Minus)
-        {
-          advance_iterator(iterator, false);
-          
-          if (iterator->current_token->kind != Token_Number)
-          {
-            hph_fatal(S("Cannot do a math operation '-' inside a variable when the variable does no expand to a number."));
-          }
-      
-          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
-          arg->method_kind = Template_Arg_Method_Sub;
-          arg->method_arguments.operand = operand;
-          advance_iterator(iterator, false);
-        }
-        else if (iterator->current_token->kind == Token_Asterisk)
-        {
-          advance_iterator(iterator, false);
-          
-          if (iterator->current_token->kind != Token_Number)
-          {
-            hph_fatal(S("Cannot do a math operation '*' inside a variable when the variable does no expand to a number."));
-          }
-      
-          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
-          arg->method_kind = Template_Arg_Method_Mul;
-          arg->method_arguments.operand = operand;
-          advance_iterator(iterator, false);
-        }
-        else if (iterator->current_token->kind == Token_Slash)
-        {
-          advance_iterator(iterator, false);
-          
-          if (iterator->current_token->kind != Token_Number)
-          {
-            hph_fatal(S("Cannot do a math operation '/' inside a variable when the variable does no expand to a number."));
-          }
-      
-          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
-          arg->method_kind = Template_Arg_Method_Div;
-          arg->method_arguments.operand = operand;
-          advance_iterator(iterator, false);
-        }
-        else if (iterator->current_token->kind == Token_Percent)
-        {
-          advance_iterator(iterator, false);
-          
-          if (iterator->current_token->kind != Token_Number)
-          {
-            hph_fatal(S("Cannot do a math operation '%' inside a variable when the variable does no expand to a number."));
-          }
-      
-          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
-          arg->method_kind = Template_Arg_Method_Mod;
-          arg->method_arguments.operand = operand;
-          advance_iterator(iterator, false);
-        }
-      }
-      else
-      {
-        hph_fatal(S("Expected identifier or '@' after '$(' in template string."));
-      }
-
-      if (iterator->current_token->kind != Token_ParenClose)
-      {
-        hph_fatal(S("Expected ')' after variable name in template string."));
-      }
-
-      arg->size = 3 + arg->arg_name.size; // "$(" + name + ")"
-      result.args_count += 1;
-      string_index += arg->size;
-
-      advance_iterator(iterator, false); // skip ')'
-    }
-    else
-    {
-      Token* token = iterator->current_token;
-      Token* next_token = 0;
-      if (iterator->cursor + 1 < iterator->array->count)
-      {
-        next_token = &iterator->array->tokens[iterator->cursor + 1];
-      }
-
-      // Replace string "\n" with new line byte
-      if (token->value.size == 1 && token->value.str[0] == '\\' && next_token && next_token->value.size > 0 && next_token->value.str[0] == 'n')
-      {
-        u8* new_line = push_array(hephaestus.arena, u8, 1);
-        new_line[0] = '\n';
-        string8_list_push(hephaestus.arena, &result_list, (String8){1, new_line});
-        string_index += 1;
-
-        // push leftover after 'n' if present
-        if (next_token->value.size > 1)
-        {
-          String8 leftover = { next_token->value.size - 1, next_token->value.str + 1 };
-          string8_list_push(hephaestus.arena, &result_list, leftover);
-          string_index += leftover.size;
-        }
-
-        // advance twice
-        advance_iterator(iterator, false);
-        advance_iterator(iterator, false);
-      }
-      else
-      {
-        string8_list_push(hephaestus.arena, &result_list, token->value);
-        string_index += token->value.size;
-        advance_iterator(iterator, false);
       }
     }
   }
+#undef safe_advance
 
-  result.string = string8_list_join(hephaestus.arena, &result_list);
-  advance_iterator(iterator, false); // skip closing backtick
-  scratch_end(&scratch);
   return result;
 }
 

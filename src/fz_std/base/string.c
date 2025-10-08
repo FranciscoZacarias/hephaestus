@@ -53,28 +53,48 @@ string8_replace_first(Arena* arena, String8 str, String8 a, String8 b)
 }
 
 function String8
-string8_replace_all(Arena *arena, String8 str, String8 a, String8 b)
+string8_replace_all(Arena *arena, String8 str, String8 search, String8 replace)
 {
-  if (a.size == 0) return string8_copy(arena, str);
+  if (search.size == 0) return string8_copy(arena, str);
 
-  String8 result = string8_copy(arena, str);
+  u64 count = 0;
   u64 index = 0;
-
-  while (string8_find_first(result, a, &index))
+  while (index <= str.size - search.size)
   {
-    u64 new_size = result.size - a.size + b.size;
-    u8 *mem = (u8 *)arena_push(arena, new_size);
-
-    memcpy(mem, result.str, index);
-    memcpy(mem + index, b.str, b.size);
-    u64 after_size = result.size - (index + a.size);
-    memcpy(mem + index + b.size, result.str + index + a.size, after_size);
-
-    result.str = mem;
-    result.size = new_size;
+    if (MemoryMatch(str.str + index, search.str, search.size))
+    {
+      count++;
+      index += search.size;
+    }
+    else
+    {
+      index++;
+    }
   }
 
-  return result;
+  if (count == 0) return string8_copy(arena, str);
+
+  u64 new_size = str.size + count * (replace.size - search.size);
+  u8 *mem = (u8 *)arena_push(arena, new_size);
+
+  u64 src = 0;
+  u64 dst = 0;
+  while (src < str.size)
+  {
+    if (src <= str.size - search.size && MemoryMatch(str.str + src, search.str, search.size))
+    {
+      // copy replacement
+      memcpy(mem + dst, replace.str, replace.size);
+      dst += replace.size;
+      src += search.size;
+    }
+    else
+    {
+      mem[dst++] = str.str[src++];
+    }
+  }
+
+  return (String8){new_size, mem};
 }
 
 
