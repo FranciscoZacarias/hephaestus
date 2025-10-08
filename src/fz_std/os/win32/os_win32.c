@@ -663,7 +663,6 @@ os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
     abs_path.str[pos++] = '/';
   }
 
-  if (pos > 0) pos--; // remove trailing '/'
   abs_path.size = pos;
   abs_path.str[pos] = 0;
 

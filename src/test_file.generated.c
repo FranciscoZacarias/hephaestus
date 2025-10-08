@@ -1,4 +1,4 @@
-// @Hephaestus generated code 2025-October-08 15:53:23 
+// @Hephaestus generated code 2025-October-08 19:38:41 
 
 // Row 0
 typedef struct node node;
@@ -6,7 +6,7 @@ struct node_stack
 {
   UI_Node* data[32];
   u32 top_index;
-  UI_Node bottom_val;
+  UI_Node* bottom_val;
 };
 
 
@@ -16,7 +16,7 @@ struct top_left_stack
 {
   Vec2f32 data[32];
   u32 top_index;
-  Vec2f3 bottom_val;
+  Vec2f32 bottom_val;
 };
 
 
@@ -26,7 +26,7 @@ struct size_x_stack
 {
   f32 data[32];
   u32 top_index;
-  f3 bottom_val;
+  f32 bottom_val;
 };
 
 
@@ -36,7 +36,7 @@ struct size_y_stack
 {
   f32 data[32];
   u32 top_index;
-  f3 bottom_val;
+  f32 bottom_val;
 };
 
 
@@ -46,7 +46,7 @@ struct spacing_y_stack
 {
   f32 data[32];
   u32 top_index;
-  f3 bottom_val;
+  f32 bottom_val;
 };
 
 
@@ -56,7 +56,7 @@ struct alignment_kind_stack
 {
   UI_Alignment_Kind data[32];
   u32 top_index;
-  UI_Alignment_Kin bottom_val;
+  UI_Alignment_Kind bottom_val;
 };
 
 
@@ -66,7 +66,7 @@ struct width_kind_stack
 {
   UI_Width_Kind data[32];
   u32 top_index;
-  UI_Width_Kin bottom_val;
+  UI_Width_Kind bottom_val;
 };
 
 
@@ -76,7 +76,7 @@ struct height_kind_stack
 {
   UI_Height_Kind data[32];
   u32 top_index;
-  UI_Height_Kin bottom_val;
+  UI_Height_Kind bottom_val;
 };
 
 
@@ -86,7 +86,7 @@ struct node_color_scheme_stack
 {
   UI_Node_Color_Scheme data[32];
   u32 top_index;
-  UI_Node_Color_Schem bottom_val;
+  UI_Node_Color_Scheme bottom_val;
 };
 
 
@@ -96,7 +96,7 @@ struct border_color_stack
 {
   Color data[32];
   u32 top_index;
-  Colo bottom_val;
+  Color bottom_val;
 };
 
 
@@ -106,7 +106,7 @@ struct background_color_stack
 {
   Color data[32];
   u32 top_index;
-  Colo bottom_val;
+  Color bottom_val;
 };
 
 
