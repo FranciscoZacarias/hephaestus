@@ -744,14 +744,19 @@ parse_template_string(Token_Iterator* iterator)
 
       if (iterator->current_token->kind == Token_At)
       {
-        // Special variable
         advance_iterator(iterator, false);
         String8 name = iterator->current_token->value;
 
-        if (string8_match(name, S("time_now"), false))
+        // Special variables
+        if (string8_match(name, S("time_now"), true))
         {
           arg->kind = Template_String_Variable_Time_Now;
           arg->arg_name = S("@time_now");
+        }
+        else if (string8_match(name, S("index"), true))
+        {
+          arg->kind = Template_String_Variable_Index;
+          arg->arg_name = S("@index");
         }
         else
         {
@@ -765,11 +770,12 @@ parse_template_string(Token_Iterator* iterator)
         arg->kind = Template_String_Variable_Replace;
         arg->arg_name = iterator->current_token->value;
         advance_iterator(iterator, false);
+
         if (iterator->current_token->kind == Token_Dot)
         {
           advance_iterator(iterator, false);
 
-          if (string8_match(iterator->current_token->value, S("slice"), true))
+          if (string8_match(iterator->current_token->value, S("truncate"), true))
           {
             advance_iterator(iterator, false);
 
@@ -785,6 +791,9 @@ parse_template_string(Token_Iterator* iterator)
             }
 
             String8 offset_token = iterator->current_token->value;
+            s32 offset = atoi(cstring_from_string8(scratch.arena, offset_token));
+            arg->method_kind = Template_Arg_Method_Truncate;
+            arg->method_arguments.offset = offset;
             advance_iterator(iterator, false);
 
             if (iterator->current_token->kind != Token_ParenClose)
@@ -793,14 +802,81 @@ parse_template_string(Token_Iterator* iterator)
             }
             advance_iterator(iterator, false);
 
-            s32 offset = atoi(cstring_from_string8(scratch.arena, offset_token));
-            arg->method_kind = Template_Arg_Method_Slice;
-            arg->method_arguments.offset = offset;
           }
           else
           {
             hph_fatal(Sf(scratch.arena, "Unknown method '" S_FMT "' after '.' in template string.", S_ARG(iterator->current_token->value)));
           }
+        }
+        else if (iterator->current_token->kind == Token_Plus)
+        {
+          advance_iterator(iterator, false);
+          
+          if (iterator->current_token->kind != Token_Number)
+          {
+            hph_fatal(S("Cannot do a math operation '+' inside a variable when the variable does no expand to a number."));
+          }
+      
+          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
+          arg->method_kind = Template_Arg_Method_Add;
+          arg->method_arguments.operand = operand;
+          advance_iterator(iterator, false);
+        }
+        else if (iterator->current_token->kind == Token_Minus)
+        {
+          advance_iterator(iterator, false);
+          
+          if (iterator->current_token->kind != Token_Number)
+          {
+            hph_fatal(S("Cannot do a math operation '-' inside a variable when the variable does no expand to a number."));
+          }
+      
+          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
+          arg->method_kind = Template_Arg_Method_Sub;
+          arg->method_arguments.operand = operand;
+          advance_iterator(iterator, false);
+        }
+        else if (iterator->current_token->kind == Token_Asterisk)
+        {
+          advance_iterator(iterator, false);
+          
+          if (iterator->current_token->kind != Token_Number)
+          {
+            hph_fatal(S("Cannot do a math operation '*' inside a variable when the variable does no expand to a number."));
+          }
+      
+          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
+          arg->method_kind = Template_Arg_Method_Mul;
+          arg->method_arguments.operand = operand;
+          advance_iterator(iterator, false);
+        }
+        else if (iterator->current_token->kind == Token_Slash)
+        {
+          advance_iterator(iterator, false);
+          
+          if (iterator->current_token->kind != Token_Number)
+          {
+            hph_fatal(S("Cannot do a math operation '/' inside a variable when the variable does no expand to a number."));
+          }
+      
+          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
+          arg->method_kind = Template_Arg_Method_Div;
+          arg->method_arguments.operand = operand;
+          advance_iterator(iterator, false);
+        }
+        else if (iterator->current_token->kind == Token_Percent)
+        {
+          advance_iterator(iterator, false);
+          
+          if (iterator->current_token->kind != Token_Number)
+          {
+            hph_fatal(S("Cannot do a math operation '%' inside a variable when the variable does no expand to a number."));
+          }
+      
+          s32 operand = atoi(cstring_from_string8(scratch.arena, iterator->current_token->value));
+          arg->method_kind = Template_Arg_Method_Mod;
+          arg->method_arguments.operand = operand;
+          advance_iterator(iterator, false);
         }
       }
       else

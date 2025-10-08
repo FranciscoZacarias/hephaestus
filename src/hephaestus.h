@@ -125,6 +125,7 @@ typedef enum
 
   Template_String_Variable_Replace, /* Replace this argument with string */
   Template_String_Variable_Time_Now, /* Replace this argument with time_now */
+  Template_String_Variable_Index, /* Replace this argument with index of current foreach iteration */
 
   Template_String_Variable_Count,
 } Template_String_Variable_Kind;
@@ -133,7 +134,13 @@ typedef enum
 {
   Template_Arg_Method_None = 0,
 
-  Template_Arg_Method_Slice,
+  Template_Arg_Method_Truncate,
+
+  Template_Arg_Method_Add,
+  Template_Arg_Method_Sub,
+  Template_Arg_Method_Mul,
+  Template_Arg_Method_Div,
+  Template_Arg_Method_Mod,
 
   Template_Arg_Method_Count,
 } Template_Arg_Method_Kind;
@@ -193,7 +200,8 @@ struct Template_String8_Arg
   Template_Arg_Method_Kind method_kind;
   union
   {
-    s32 offset; /* Argument for .slice(<offset>) */
+    s32 offset; /* Argument for .truncate(<offset>). */
+    s32 operand; /* Argument for math operations (+ - * / %) */
   } method_arguments;
 };
 
