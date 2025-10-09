@@ -565,16 +565,21 @@ os_path_is_absolute(String8 path)
 function String8
 os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
 {
+  b32 ends_with_slash = 0;
+  if (relative_path.size > 0)
+  {
+    u8 c = relative_path.str[relative_path.size - 1];
+    if (c == '/' || c == '\\') ends_with_slash = 1;
+  }
+
   if (os_path_is_absolute(relative_path))
   {
-    // Still allocate for consistency
     String8 result = string8_copy(arena, relative_path);
     return result;
   }
 
   String8 exe_path = os_executable_path(arena);
 
-  // Find last slash to isolate directory
   u64 last_slash = 0;
   for (u64 i = 0; i < exe_path.size; i++)
   {
@@ -589,7 +594,6 @@ os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
     .str  = exe_path.str,
   };
 
-  // Combine base dir + "/" + relative
   u64 tmp_size = base_dir.size + 1 + relative_path.size;
   u8 *tmp_str  = push_array(arena, u8, tmp_size + 1);
   memcpy(tmp_str, base_dir.str, base_dir.size);
@@ -604,13 +608,11 @@ os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
   u64 combined_size = offset + relative_path.size;
   tmp_str[combined_size] = 0;
 
-  // Normalize '\' -> '/'
   for (u64 i = 0; i < combined_size; i++)
   {
     if (tmp_str[i] == '\\') tmp_str[i] = '/';
   }
 
-  // Tokenize and resolve "." and ".."
   u8 **parts = push_array(arena, u8*, combined_size/2 + 1);
   u64 parts_count = 0;
 
@@ -626,34 +628,36 @@ os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
 
         if (len == 1 && seg[0] == '.')
         {
-          // skip "."
+          // skip
         }
         else if (len == 2 && seg[0] == '.' && seg[1] == '.')
         {
-          // go up one directory
           if (parts_count > 0) parts_count -= 1;
         }
         else
         {
           parts[parts_count++] = seg;
-          seg[len] = 0; // null terminate segment
+          seg[len] = 0;
         }
       }
       start = i + 1;
     }
   }
 
-  // Rebuild canonical path
   u64 final_size = 0;
   for (u64 i = 0; i < parts_count; i++)
   {
-    final_size += strlen((char*)parts[i]) + 1; // +1 for '/'
+    final_size += strlen((char*)parts[i]) + 1;
+  }
+  if (parts_count > 0) final_size -= 1; // no trailing slash unless needed
+
+  if (ends_with_slash)
+  {
+    final_size += 1;
   }
 
   String8 abs_path;
-  abs_path.size = final_size;
-  abs_path.str  = push_array(arena, u8, final_size + 1);
-
+  abs_path.str = push_array(arena, u8, final_size + 1);
   u64 pos = 0;
   for (u64 i = 0; i < parts_count; i++)
   {
@@ -664,6 +668,11 @@ os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
     {
       abs_path.str[pos++] = '/';
     }
+  }
+
+  if (ends_with_slash && (pos == 0 || abs_path.str[pos-1] != '/'))
+  {
+    abs_path.str[pos++] = '/';
   }
 
   abs_path.size = pos;
