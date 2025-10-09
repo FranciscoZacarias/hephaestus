@@ -660,7 +660,10 @@ os_absolute_path_from_relative_path(Arena* arena, String8 relative_path)
     u64 len = strlen((char*)parts[i]);
     memcpy(abs_path.str + pos, parts[i], len);
     pos += len;
-    abs_path.str[pos++] = '/';
+    if (i+1 != parts_count)
+    {
+      abs_path.str[pos++] = '/';
+    }
   }
 
   abs_path.size = pos;
