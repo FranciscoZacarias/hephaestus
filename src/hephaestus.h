@@ -209,7 +209,7 @@ struct Template_String8_Arg
   u32 start_index;  /* Index of $ into the string */
 };
 
-#define MAX_TEMPLATE_STRING_ARGS 16
+#define MAX_TEMPLATE_STRING_ARGS 64
 typedef struct Template_String8 Template_String8;
 struct Template_String8
 {
