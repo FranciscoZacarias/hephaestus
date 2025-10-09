@@ -593,30 +593,27 @@ run_hephaestus()
         {
 					if (command->template_string.args_count > 0)
 					{
+						String8 string = string8_copy(hephaestus.arena, command->template_string.string);
 						for (u32 arg_index = 0; arg_index < command->template_string.args_count; arg_index += 1)
 						{
-							String8 string = string8_copy(hephaestus.arena, command->template_string.string);
 							Template_String8_Arg* arg = &command->template_string.args[arg_index];
 							switch (arg->kind)
 							{
 								// Replace with date
 								case Template_String_Variable_Unknown: { /* Don't do anything */ } break;
+								case Template_String_Variable_Replace: { /* Variables in a single string command don't yield anything because there is no loop, I.e. no row to match. */ } break;
 								case Template_String_Variable_Time_Now:
 								{
 									String8 time_now = os_datetime_to_string8(hephaestus.arena, os_datetime_now(), false);
 									string = string8_replace_first(hephaestus.arena, string, S("$(@time_now)"), time_now);
-								} break;
-								case Template_String_Variable_Replace:
-								{
-              	
 								} break;
 								default:
 								{
 									hph_fatal(S("Argument kind not found or not allowed inside a string command."));
 								}
 							}
-							content = string8_concat(hephaestus.arena, content, string);
 						}
+						content = string8_concat(hephaestus.arena, content, string);
 					}
 					else
 					{

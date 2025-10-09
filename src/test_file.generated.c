@@ -1,6 +1,14 @@
-// @Hephaestus generated code 2025-October-09 18:05:35 
+// @Hephaestus generated code 2025-October-09 18:17:53 2025-October-09 18:17:53 by Francisco Zacarias 
 
-#define max 13// Row 0
+/* Each stack is defined by the struct:
+  struct $(name_upper)
+  {
+    $(type) data[$(max)];
+    u32 top_index;
+    $(type) bottom_val;
+  };*/
+#define max 13
+// Row 0
 typedef struct node node;
 struct node_stack
 {
