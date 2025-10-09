@@ -3,3 +3,4 @@ build/*
 *.rdbg
 *.10x
 *.log
+run.bat
