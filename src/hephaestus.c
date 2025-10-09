@@ -844,7 +844,7 @@ parse_template_string(Token_Iterator* iterator)
   {
     hph_fatal(S("parse_template_string() requires current token to be a backtick"));
   }
-  advance_iterator(iterator, true);
+  advance_iterator(iterator, false);
 
   // We handle the template string per byte, so we'll just skip the iterator to the end of the string.
   String8_List list = string8_list_empty();

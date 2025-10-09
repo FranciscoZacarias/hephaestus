@@ -26,5 +26,5 @@ Stack_Table (name type default_value max)
   `// @Hephaestus generated code $(@time_now) \n\n`
 	`#define max 13`
   @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type) bottom_val;\n};\n\n\n`
-  @foreach(Stack_Table) `one print per row\n`
+  @foreach(Stack_Table) `  one print per row\n`
 }
