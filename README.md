@@ -1,6 +1,6 @@
 # Hephaestus 
 
-Hephaestus is a table driven text generator heavily inspired by [this article]([https://github.com/ryanfleury/metadesk](https://www.rfleury.com/p/table-driven-code-generation)). 
+Hephaestus is a table driven text generator heavily inspired by [this article](https://www.rfleury.com/p/table-driven-code-generation). 
  
 This language is designed to define structured data tables, and generation templates for automatic text output.
 
@@ -162,6 +162,7 @@ struct size_x_stack
 ...
 ```
 Each table row generates a new struct block.
+
 
 
 
