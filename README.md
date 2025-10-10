@@ -59,7 +59,7 @@ Stack_Table (name type default_value max)
 ### `@generate`
 Defines the output template. Can contain static text and dynamic interpolations.  
 Supports looping through table rows and inserting variable values.
-Each `@generate` must specify which file extension it will write to by adding @<ext>_file in front of it.
+Each `@generate` must specify which file extension it will write to by adding @ext_file in front of it (E.g. @c_file will create a `.c` file).
 
 **Example:**
 ```c
@@ -111,8 +111,8 @@ If the variable expands to a string:
 ```
 // Where $(name) expands to "Node"
 
-$(name)+1 → "ode"
-$(name)-1 → "Nod"
+$(name+1) → "ode"
+$(name-1) → "Nod"
 ```
 
 ---
@@ -162,6 +162,7 @@ struct size_x_stack
 ...
 ```
 Each table row generates a new struct block.
+
 
 
 
