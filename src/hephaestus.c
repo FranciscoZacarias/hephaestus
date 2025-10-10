@@ -42,7 +42,7 @@ entry_point(Command_Line* command_line)
   
   // Init hph
   hephaestus                 = (Hephaestus){0};
-  hephaestus.arena           = arena_alloc();
+  hephaestus.arena           = arena_alloc_sized(Gigabytes(1), Megabytes(8));
   hephaestus.table           = push_array(hephaestus.arena, Table, HPH_MAX_TABLES);
   hephaestus.table_count     = 0;
   hephaestus.generator       = push_array(hephaestus.arena, Generator, HPH_MAX_GENERATORS);
@@ -56,7 +56,7 @@ entry_point(Command_Line* command_line)
 function Token_Array*
 load_all_tokens(String8 file_path)
 {
-  lexer.arena = arena_alloc();
+  lexer.arena = arena_alloc_sized(Gigabytes(1), Megabytes(8));
 
   Token_Array* result = push_array(lexer.arena, Token_Array, 1);
   result->tokens = push_array(lexer.arena, Token, TOKEN_ARRAY_SIZE);
