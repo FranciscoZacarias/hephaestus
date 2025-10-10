@@ -47,7 +47,7 @@ UI_Enum_Table
 
 @table // Bitflags
 UI_Node_Flags_Table
-  (name documentation)
+  (name                       documentation)
 {
   { Mouse_Clickable          `TODO(fz): Add documentation` } 
   { Display_Text             `TODO(fz): Add documentation` } 
@@ -68,7 +68,7 @@ UI_Node_Flags_Table
 
 @table // Bitflags
 UI_Signal_Flags_Table
-  (name documentation)
+  (name            documentation)
 {
   { Left_Down      `TODO(fz): Add documentation` } 
   { Middle_Down    `TODO(fz): Add documentation` } 

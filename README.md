@@ -16,13 +16,13 @@ All configuration variables defined here can be referenced anywhere in the file.
 ```c
 @config
 {
-  @output_file_name `test_file.c`
-  @output_file_path `../src/generated/`
+  @output_file_name `test_file`
+  @output_path `../src/generated/`
 }
 ```
 **Supported keys:**
-- `@output_file_name` → Name of the file to generate.
-- `@output_file_path` → Relative or absolute path where the file will be placed.
+- `@output_file_name` → Name of the file to generate. should be specified without extensions. Every file hephaestus creates and writes to will be appended with `.hephaestus.<ext>` (ext is defined by the user, see `@generate`).
+- `@output_path` → Relative or absolute path where the file will be placed.
 
 More configuration variables can be added in the future.
 
@@ -59,10 +59,11 @@ Stack_Table (name type default_value max)
 ### `@generate`
 Defines the output template. Can contain static text and dynamic interpolations.  
 Supports looping through table rows and inserting variable values.
+Each `@generate` must specify which file extension it will write to by adding @<ext>_file in front of it.
 
 **Example:**
 ```c
-@generate
+@generate @h_file
 {
   `// @Hephaestus generated code $(@time_now) \n\n`
   @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type) bottom_val;\n};\n\n\n`
@@ -120,7 +121,7 @@ $(name)-1 → "Nod"
 
 **Input DSL:**
 ```c
-@generate
+@generate @c_file
 {
   `// @Hephaestus generated code $(@time_now) \n\n`
   @foreach(Stack_Table) `// Row $(@index)\ntypedef struct $(name) $(name);\nstruct $(name)_stack\n{\n  $(type) data[$(max)];\n  u32 top_index;\n  $(type) bottom_val;\n};\n\n\n`
