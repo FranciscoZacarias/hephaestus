@@ -1,12 +1,11 @@
 
 @config
 {
-  @output_file_name `test.generated.h`
-  @output_file_path `../src/`
-  // TODO(fz): Add if guards to the file
+  @output_file_name `test`
+  @output_path `../src/`
 }
 
-@generate
+@generate @h_file
 {
   `// @Hephaestus generated code $(@time_now)\n\n`
 }
@@ -23,7 +22,7 @@ UI_Types_Table
   { UI_Context           }
 }
 
-@generate
+@generate @h_file
 {
   `// Forward declare UI structures\n`
   @foreach(UI_Types_Table) `typedef struct $(name) $(name);\n`
@@ -39,7 +38,7 @@ UI_Enum_Table
   { UI_Height_Kind    }
 }
 
-@generate
+@generate @h_file
 {
   `// Forward declare UI enums\n`
   @foreach(UI_Enum_Table) `typedef enum $(name) $(name)\n`
@@ -59,7 +58,7 @@ UI_Node_Flags_Table
   { Dimensions_Wrap_Text     `TODO(fz): Add documentation` } 
 }
 
-@generate
+@generate @h_file
 {
   `typedef u64 UI_Node_Flags;\nenum\n{\n`
   @foreach(UI_Node_Flags_Table) `  UI_Node_Flags_$(name) = (1 << $(@index)), /* $(documentation) */ \n`
@@ -82,7 +81,7 @@ UI_Signal_Flags_Table
   { Mouse_Hovered  `TODO(fz): Add documentation` } 
 }
 
-@generate
+@generate @h_file
 {
   `typedef u64 UI_Node_Flags;\nenum\n{\n`
   @foreach(UI_Signal_Flags_Table) `  UI_Signal_Flags_$(name) = (1 << $(@index)), /* $(documentation) */\n`
@@ -117,7 +116,7 @@ Stack_Table
   { Text_Active_Color       text_active_color          Color                  PURPLE(1)                         32 `Text color when active`              }
 }
 
-@generate
+@generate @c_file
 {
   `#define ui_stack_init(ctx, name, bot_val) Statement((ctx)->name##_stack.top_index = 0; (ctx)->name##_stack.bottom_val = (bot_val);)
 #define ui_stack_push(ctx, name, val) ((ctx)->name##_stack.data[((ctx)->name##_stack.top_index < sizeof((ctx)->name##_stack.data)/sizeof((ctx)->name##_stack.data[0])) ? (ctx)->name##_stack.top_index++ : (ctx)->name##_stack.top_index] = (val))

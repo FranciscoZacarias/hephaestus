@@ -344,15 +344,15 @@ process_tokens(Token_Array* array)
                 hph_fatal(S("Must provide a valid @output_file_name inside @config."));
               }
             }
-            else if (string8_match(token_iterator.current_token->value, S("output_file_path"), false))
+            else if (string8_match(token_iterator.current_token->value, S("output_path"), false))
             {
               // handle output_file_location
               advance_iterator(&token_iterator, true);
               Template_String8 template_string = parse_template_string(&token_iterator);
-              hephaestus.output_file_path = os_absolute_path_from_relative_path(hephaestus.arena, template_string.string);
-              if (hephaestus.output_file_path.size == 0)
+              hephaestus.output_path = os_absolute_path_from_relative_path(hephaestus.arena, template_string.string);
+              if (hephaestus.output_path.size == 0)
               {
-                hph_fatal(S("Must provide a valid @output_file_path inside @config."));
+                hph_fatal(S("Must provide a valid @output_path inside @config."));
               }
             }
             else
@@ -487,6 +487,31 @@ process_tokens(Token_Array* array)
       // --------------------
       else if (string8_match(token_iterator.current_token->value, S("generate"), false))
       {
+        Generator* generator = &hephaestus.generator[hephaestus.generator_count++];
+        generator->command_queue = push_array(hephaestus.arena, Generator_Command, HPH_MAX_GENERATOR_COMMANDS);
+
+        advance_iterator(&token_iterator, true);
+
+        if (token_iterator.current_token->kind != Token_At)
+        {
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected '@' after @generate with the file type to generate into. E.g. @generate @c_file, @generate @h_file ...", token_iterator.current_token->line, token_iterator.current_token->column));
+        }
+
+        advance_iterator(&token_iterator, true);
+
+        if (token_iterator.current_token->kind != Token_String_Identifier)
+        {
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected identifier after @generate with the file type to generate into. E.g. @generate @c_file, @generate @h_file ...", token_iterator.current_token->line, token_iterator.current_token->column));
+        }
+
+        String8_List file = string8_split(hephaestus.arena, token_iterator.current_token->value, S("_"));
+        if (file.node_count != 2 || !string8_match(file.last->value, S("file"), true))
+        {
+          hph_fatal(Sf(scratch.arena, "L:%d C:%d Expected identifier after @generate to be '<file_ext>_file'. Identifier provided: "S_FMT, token_iterator.current_token->line, token_iterator.current_token->column, S_ARG(token_iterator.current_token->value)));
+        }
+
+        generator->file_extension = string8_copy(hephaestus.arena, file.first->value);
+
         advance_iterator(&token_iterator, true);
 
         if (token_iterator.current_token->kind != Token_BraceOpen)
@@ -495,9 +520,6 @@ process_tokens(Token_Array* array)
         }
 
         advance_iterator(&token_iterator, true);
-
-        Generator* generator = &hephaestus.generator[hephaestus.generator_count++];
-        generator->command_queue = push_array(hephaestus.arena, Generator_Command, HPH_MAX_GENERATOR_COMMANDS);
 
         while (token_iterator.current_token->kind != Token_BraceClose && token_iterator.current_token->kind != Token_EOF)
         {
@@ -577,12 +599,22 @@ function void
 run_hephaestus()
 {
   // Build output file
-  String8 file = string8_concat(hephaestus.arena, hephaestus.output_file_path, hephaestus.output_file_name);
-  String8 content = S("");
+  String8 file = string8_concat(hephaestus.arena, hephaestus.output_path, hephaestus.output_file_name);
+
+  for (u32 generator_index = 0; generator_index < hephaestus.generator_count; generator_index += 1)
+  { 
+    Generator* generator = &hephaestus.generator[generator_index];
+    String8 file_to_write_to = string8_concat(hephaestus.arena, file, S(".hephaestus."));
+    file_to_write_to = string8_concat(hephaestus.arena, file_to_write_to, generator->file_extension);
+    os_file_wipe(file_to_write_to);
+  }
 
   for (u32 generator_index = 0; generator_index < hephaestus.generator_count; generator_index += 1)
   {
     Generator* generator = &hephaestus.generator[generator_index];
+    String8 file_to_write_to = string8_concat(hephaestus.arena, file, S(".hephaestus."));
+    file_to_write_to = string8_concat(hephaestus.arena, file_to_write_to, generator->file_extension);
+    String8 content = S("");
 
     for (u32 commang_index = 0; commang_index < generator->command_count; commang_index += 1)
     {
@@ -721,10 +753,8 @@ run_hephaestus()
         } break;
       }
     }
+    os_file_append(file_to_write_to, content.str, content.size);
   }
-
-  os_file_wipe(file);
-  os_file_append(file, content.str, content.size);
 }
 
 function b32

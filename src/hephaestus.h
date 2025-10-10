@@ -230,6 +230,7 @@ struct Generator_Command
 typedef struct Generator Generator;
 struct Generator
 {
+  String8 file_extension;
   Generator_Command* command_queue;
   u32 command_count;
 };
@@ -242,7 +243,7 @@ struct Hephaestus
   Arena* arena;
 
   String8 output_file_name;
-  String8 output_file_path;
+  String8 output_path;
 
   Table* table;
   u32 table_count;
