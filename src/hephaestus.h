@@ -147,7 +147,7 @@ struct Token_Array
   Token* tokens;
   u64 count;
 };
-#define TOKEN_ARRAY_SIZE Megabytes(16)
+#define TOKEN_ARRAY_SIZE Megabytes(1)
 
 typedef struct Token_Iterator Token_Iterator;
 struct Token_Iterator
@@ -209,7 +209,7 @@ struct Template_String8_Arg
   u32 start_index;  /* Index of $ into the string */
 };
 
-#define MAX_TEMPLATE_STRING_ARGS 128
+#define MAX_TEMPLATE_STRING_ARGS 64
 typedef struct Template_String8 Template_String8;
 struct Template_String8
 {
@@ -226,7 +226,7 @@ struct Generator_Command
   Template_String8 template_string;
 };
 
-#define HPH_MAX_GENERATOR_COMMANDS 8
+#define HPH_MAX_GENERATOR_COMMANDS 32
 typedef struct Generator Generator;
 struct Generator
 {
@@ -234,8 +234,8 @@ struct Generator
   u32 command_count;
 };
 
-#define HPH_MAX_TABLES 64
-#define HPH_MAX_GENERATORS 64
+#define HPH_MAX_TABLES 32
+#define HPH_MAX_GENERATORS 32
 typedef struct Hephaestus Hephaestus;
 struct Hephaestus
 {
