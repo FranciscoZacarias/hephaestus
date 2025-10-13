@@ -4,7 +4,10 @@ function void
 entry_point(Command_Line* command_line)
 {
   Arena* arena = arena_alloc();
+
+#if 0
   os_console_init();
+#endif
 
   String8 hph_file_path = {0};
 
