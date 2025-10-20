@@ -5,6 +5,108 @@
   @output_path `../src/`
 }
 
+
+@table
+Vector_Types_Table (type)
+{
+  { `u8 ` } { u16 } { u32 } { u64 }
+  { `s8 ` } { s16 } { s32 } { s64 }
+                    { f32 } { f64 }
+}
+
+@generate @h_file
+{
+  `#ifndef MATH_HEPHAESTUS_H\n#define UI_HEPHAESTUS_H\n\n`
+  `/*\n@Hephaestus generated code\n*/\n\n`
+}
+
+// Vector 2
+// --------
+@generate @h_file
+{
+  `// Vector2\n`
+  `// -------`
+  @foreach(Vector_Types_Table) `typedef union Vec2$(type) { $(type) data[2]; struct { $(type) x, y; }; } Vec2$(type);
+function Vec2$(type) vector2_add(Vec2$(type) a, Vec2$(type) b);
+function Vec2$(type) vector2_subtract(Vec2$(type) a, Vec2$(type) b);
+function Vec2$(type) vector2_multiply(Vec2$(type) a, Vec2$(type) b);
+function Vec2$(type) vector2_divide(Vec2$(type) a, Vec2$(type) b);
+function Vec2$(type) vector2_scale(Vec2$(type) vector, f32 scalar);
+function Vec2$(type) vector2_negate(Vec2$(type) vector);
+function Vec2$(type) vector2_rotate(Vec2$(type) vector, f32 radians);
+function Vec2$(type) vector2_normalize(Vec2$(type) vector);
+function Vec2$(type) vector2_linear_interpolate(Vec2$(type) a, Vec2$(type) b, f32 t);
+function Vec2$(type) vector2_minimum(Vec2$(type) a, Vec2$(type) b);
+function Vec2$(type) vector2_maximum(Vec2$(type) a, Vec2$(type) b);
+function Vec2$(type) vector2_clamp(Vec2$(type) vector, Vec2$(type) minimum, Vec2$(type) maximum);
+function Vec2$(type) vector2_absolute(Vec2$(type) vector);
+function Vec2$(type) vector2_perpendicular(Vec2$(type) vector);
+function Vec2$(type) vector2_reflect(Vec2$(type) incident, Vec2$(type) normal);
+function Vec2$(type) vector2_project(Vec2$(type) vector, Vec2$(type) onto);
+function Vec2$(type) vector2_snap_to_grid(Vec2$(type) vector, f32 grid_size);
+function f32 vector2_dot_product(Vec2$(type) a, Vec2$(type) b);
+function f32 vector2_cross_product(Vec2$(type) a, Vec2$(type) b);
+function f32 vector2_length(Vec2$(type) vector);
+function f32 vector2_length_squared(Vec2$(type) vector);
+function f32 vector2_distance(Vec2$(type) a, Vec2$(type) b);
+function f32 vector2_distance_squared(Vec2$(type) a, Vec2$(type) b);
+function f32 vector2_angle_between(Vec2$(type) a, Vec2$(type) b);
+function f32 vector2_signed_angle_between(Vec2$(type) a, Vec2$(type) b);
+\n`
+}
+
+// Vector 3
+// --------
+@generate @h_file
+{
+  `// Vector3\n`
+  `// -------`
+  @foreach(Vector_Types_Table) `typedef union Vec3$(type) { $(type) data[3]; struct { $(type) x, y, z; }; } Vec3$(type);
+function Vec3$(type) vector3_add(Vec3$(type) a, Vec3$(type) b);
+function Vec3$(type) vector3_subtract(Vec3$(type) a, Vec3$(type) b);
+function Vec3$(type) vector3_multiply(Vec3$(type) a, Vec3$(type) b);
+function Vec3$(type) vector3_divide(Vec3$(type) a, Vec3$(type) b);
+function Vec3$(type) vector3_scale(Vec3$(type) vector, f32 scalar);
+function Vec3$(type) vector3_negate(Vec3$(type) vector);
+function Vec3$(type) vector3_normalize(Vec3$(type) vector);
+function Vec3$(type) vector3_linear_interpolate(Vec3$(type) a, Vec3$(type) b, f32 t);
+function Vec3$(type) vector3_minimum(Vec3$(type) a, Vec3$(type) b);
+function Vec3$(type) vector3_maximum(Vec3$(type) a, Vec3$(type) b);
+function Vec3$(type) vector3_clamp(Vec3$(type) vector, Vec3$(type) minimum, Vec3$(type) maximum);
+function Vec3$(type) vector3_absolute(Vec3$(type) vector);
+function Vec3$(type) vector3_reflect(Vec3$(type) incident, Vec3$(type) normal);
+function Vec3$(type) vector3_project(Vec3$(type) vector, Vec3$(type) onto);
+function Vec3$(type) vector3_snap_to_grid(Vec3$(type) vector, f32 grid_size);
+function Vec3$(type) vector3_cross_product(Vec3$(type) a, Vec3$(type) b);
+
+// Extra 3D-specific
+function Vec3$(type) vector3_rotate_axis_angle(Vec3$(type) vector, Vec3$(type) axis, f32 radians);
+function Vec3$(type) vector3_from_to_rotation(Vec3$(type) from, Vec3$(type) to);
+function Vec3$(type) vector3_normal_from_triangle(Vec3$(type) a, Vec3$(type) b, Vec3$(type) c);
+
+function f32 vector3_dot_product(Vec3$(type) a, Vec3$(type) b);
+function f32 vector3_length(Vec3$(type) vector);
+function f32 vector3_length_squared(Vec3$(type) vector);
+function f32 vector3_distance(Vec3$(type) a, Vec3$(type) b);
+function f32 vector3_distance_squared(Vec3$(type) a, Vec3$(type) b);
+function f32 vector3_angle_between(Vec3$(type) a, Vec3$(type) b);
+function f32 vector3_min_component(Vec3$(type) vector);
+function f32 vector3_max_component(Vec3$(type) vector);
+
+\n`
+}
+
+@generate @h_file
+{
+  `\n#endif `
+  `// UI_HEPHAESTUS_H`
+}
+
+@generate @c_file
+{
+  
+}
+
 @generate @h_file
 {
   `// @Hephaestus generated code $(@time_now)\n\n`
@@ -146,4 +248,6 @@ struct UI_$(name_upper)_stack { $(type) data[$(max)]; u32 top_index; $(type) bot
   @foreach(Stack_Table) `  UI_$(name_upper)_stack $(name_lower)_stack; \\n`
   `/* Macro end */`
 }
+
+
 
