@@ -1,3 +1,5 @@
+## This project was a test run. My final implementation for this type of code generation tool can be found here: https://github.com/FranciscoZacarias/fzac/blob/master/modules/Code_Generation.h
+
 # Hephaestus 
 
 Hephaestus is a table driven text generator heavily inspired by [this article](https://www.rfleury.com/p/table-driven-code-generation). 
@@ -162,6 +164,7 @@ struct size_x_stack
 ...
 ```
 Each table row generates a new struct block.
+
 
 
 
